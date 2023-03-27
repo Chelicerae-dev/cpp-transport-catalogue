@@ -1,0 +1,108 @@
+#include "transport_catalogue.h"
+#include "geo.h"
+
+namespace transport_catalogue::backend {
+
+    void TransportCatalogue::AddStop(detail::Stop stop) {
+        stops_.push_back(stop);
+        detail::Stop* this_stop = &stops_.back();
+        stopname_to_stop_[std::string_view(this_stop->name)] = this_stop;
+    }
+
+    void TransportCatalogue::AddBus(detail::Bus bus) {
+        buses_.push_back(bus);
+        detail::Bus* this_bus = &buses_.back();
+        busname_to_bus_[std::string_view(this_bus->name)] = this_bus;
+        std::for_each(this_bus->stops.begin(), this_bus->stops.end(), [this_bus](detail::Stop* stop) {
+            stop->buses.insert(this_bus);
+        });
+    }
+
+
+    void TransportCatalogue::AddStopDistances(detail::Stop* stop, std::map<std::string, int> other_stops) {
+        std::for_each(other_stops.begin(), other_stops.end(), [stop, this](const auto& other_stop) {
+            stop->distance_to_stop[GetStop(other_stop.first)->name] = other_stop.second;
+        });
+    }
+
+    int TransportCatalogue::GetStopDistance(detail::Stop* stop, detail::Stop* other_stop) {
+        if(stop->distance_to_stop.count(other_stop->name) != 0) {
+            return stop->distance_to_stop.at(other_stop->name);
+        } else if(other_stop->distance_to_stop.count(stop->name) != 0){
+            return other_stop->distance_to_stop.at(stop->name);
+        } else {
+            return 0;
+        }
+    }
+
+
+    detail::Stop* TransportCatalogue::GetStop(std::string_view stop_name){
+
+        return stopname_to_stop_.count(stop_name) != 0 ? stopname_to_stop_.at(stop_name) : nullptr;
+    }
+
+    detail::Bus* TransportCatalogue::GetBus(std::string_view bus_name) {
+        return busname_to_bus_.count(bus_name) != 0 ? busname_to_bus_.at(bus_name) : nullptr;
+    }
+
+    detail::Bus TransportCatalogue::MakeBus(std::string& bus_name, std::vector<std::string>& stop_names, bool is_looped) {
+        detail::Bus result;
+        result.name = std::move(bus_name);
+        std::for_each(stop_names.begin(), stop_names.end(), [this, &result](std::string_view stop){
+            result.stops.push_back(GetStop(stop));
+        });
+        if(!is_looped) {
+            std::for_each(stop_names.rbegin(), stop_names.rend() - 1, [this, &result](std::string_view stop){
+                result.stops.push_back(GetStop(stop));
+            });
+        }
+        result.is_looped = is_looped;
+        return result;
+    }
+
+    detail::Bus TransportCatalogue::MakeBus(detail::BusCreationQuery query) {
+        return MakeBus(query.name, query.stops, query.is_looped);
+    }
+
+    detail::BusInfo TransportCatalogue::GetBusInfo(detail::Bus* bus) {
+        std::string_view name = bus->name;
+        int stop_count = bus->stops.size();
+        int length = 0;
+        double length_geo = 0;
+        detail::Coordinates temp_coords = {100, 200};
+        detail::Stop* prev_stop = nullptr;
+        std::for_each(bus->stops.begin(), bus->stops.end(), [this, &length, &length_geo, &temp_coords, &prev_stop] (auto this_stop) {
+            if(temp_coords == detail::Coordinates{100, 200} && prev_stop == nullptr) {
+                temp_coords = this_stop->location;
+                prev_stop = this_stop;
+                return;
+            } else {
+                length += GetStopDistance(prev_stop, this_stop);
+                length_geo += detail::ComputeDistance(temp_coords, this_stop->location);
+                temp_coords = this_stop->location;
+                prev_stop = this_stop;
+            }
+        });
+        if(!bus->is_looped) {
+            length += GetStopDistance(bus->stops[1], bus->stops[0]);
+            length_geo += detail::ComputeDistance(bus->stops[1]->location, bus->stops[0]->location);
+        }
+
+        double curvature = length / length_geo;
+
+        std::vector<detail::Stop*> temp(bus->stops);
+        std::sort(temp.begin(), temp.end());
+        int unique_stop_count = std::distance(temp.begin(), std::unique(temp.begin(), temp.end()));
+        return {name, stop_count, unique_stop_count, length, curvature};
+    }
+
+    detail::StopInfo TransportCatalogue::GetStopInfo(detail::Stop* stop) {
+    detail::StopInfo info;
+    info.name = stop->name;
+    std::for_each(stop->buses.begin(), stop->buses.end(), [&info](auto bus) {
+        info.buses.insert(bus->name);
+    });
+    return info;
+
+}
+}
