@@ -18,7 +18,7 @@ namespace transport_catalogue {
             std::string name;
             Coordinates location;
             std::set<Bus*> buses{};
-            std::map<std::string_view, int> distance_to_stop{};
+            //std::map<std::string_view, int> distance_to_stop{};
             bool operator<(Stop another) {
                 return (this->name < another.name);
             }
@@ -49,6 +49,22 @@ namespace transport_catalogue {
             std::string_view name;
             std::set<std::string> buses;
         };
+
+        struct StopDistancesQuery {
+            std::string name;
+            std::map<std::string, int> distances;
+        };
+
+        enum QueryType {
+            BusQuery, StopQuery
+        };
+
+        struct OutputQuery {
+            std::string name;
+            size_t place;
+            QueryType type;
+            bool exists;
+        };
     }
 
     namespace backend {
@@ -75,6 +91,7 @@ namespace transport_catalogue {
             std::unordered_map<std::string_view, detail::Stop*> stopname_to_stop_;
             std::list<detail::Bus> buses_;
             std::unordered_map<std::string_view, detail::Bus*> busname_to_bus_;
+            std::unordered_map<detail::Stop*, std::unordered_map<detail::Stop*, int>> distances_;
 
 
     };

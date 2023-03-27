@@ -8,12 +8,6 @@
 #include "transport_catalogue.h"
 
 namespace transport_catalogue {
-    namespace detail {
-        struct StopDistancesQuery {
-            std::string name;
-            std::map<std::string, int> distances;
-        };
-    }
     namespace input {
         class InputReader {
         public:

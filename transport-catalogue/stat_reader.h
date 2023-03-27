@@ -10,23 +10,14 @@
 
 namespace transport_catalogue {
     namespace detail {
-        enum QueryType {
-            BusQuery, StopQuery
-        };
 
-        struct OutputQuery {
-            std::string name;
-            size_t place;
-            QueryType type;
-            bool exists;
-        };
     }
 
     namespace output {
         class StatReader {
 
           public:
-            StatReader(backend::TransportCatalogue& transport_catalogue);
+            StatReader(std::istream& input, backend::TransportCatalogue& transport_catalogue);
             void PrintQueries();
           private:
             void ParseBusQuery(backend::TransportCatalogue& transport_catalogue, std::string_view temp_string, int64_t pos);

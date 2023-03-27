@@ -14,7 +14,7 @@ namespace transport_catalogue::input {
             //добавляем sv в виде костыля на данный момент (на случай длинных запросов)
             //мало чем отличается от копирования, разве что экономим на первом разделении строки)
             std::string_view temp_string(temp);
-            int64_t pos = 0;// = temp_string.find_first_not_of(" ");
+            int64_t pos = 0;
             int64_t type_ender = temp_string.find(' ', pos);
             std::string_view type_text = temp_string.substr(pos, type_ender - pos);
             pos = type_ender + 1;

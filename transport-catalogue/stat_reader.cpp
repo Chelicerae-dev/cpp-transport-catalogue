@@ -1,19 +1,23 @@
 #include "stat_reader.h"
 
 namespace transport_catalogue::output {
-    StatReader::StatReader(backend::TransportCatalogue& transport_catalogue) {
+    StatReader::StatReader(std::istream& input, backend::TransportCatalogue& transport_catalogue) {
         std::string temp_string;
         int queries_count = 0;
-        std::getline(std::cin, temp_string);
+        std::getline(input, temp_string);
         queries_count = std::stoi(temp_string);
         temp_string.clear();
         using namespace std::string_literals;
         while(queries_count != 0) {
             --queries_count;
-            std::getline(std::cin, temp_string);
+            std::getline(input, temp_string);
             if(int64_t pos =temp_string.find("Bus"s) != temp_string.npos) {
+                //вместо именованных переменных в методах явным образом прибавляю длину строки (Bus или Stop) к позиции
+                pos += "Bus"s.size();
                 ParseBusQuery(transport_catalogue, temp_string, pos);
             } else if(int64_t pos =temp_string.find("Stop"s) != temp_string.npos) {
+                //вместо именованных переменных в методах явным образом прибавляю длину строки (Bus или Stop) к позиции
+                pos += "Stop"s.size();
                 ParseStopQuery(transport_catalogue, temp_string, pos);
             }
             temp_string.clear();
@@ -22,7 +26,6 @@ namespace transport_catalogue::output {
 
     void StatReader::ParseBusQuery(backend::TransportCatalogue& transport_catalogue, std::string_view temp_string, int64_t pos) {
         using namespace std::string_literals;
-        pos += 3;
         pos = temp_string.find_first_not_of(' ', pos);
         std::string_view bus_name = temp_string.substr(pos, temp_string.size());
         detail::Bus* bus = transport_catalogue.GetBus(bus_name);
@@ -35,7 +38,6 @@ namespace transport_catalogue::output {
     }
 
     void StatReader::ParseStopQuery(backend::TransportCatalogue& transport_catalogue, std::string_view temp_string, int64_t pos) {
-        pos += 4;
         pos = temp_string.find_first_not_of(' ', pos);
         std::string_view stop_name = temp_string.substr(pos, temp_string.size());
         detail::Stop* stop = transport_catalogue.GetStop(stop_name);

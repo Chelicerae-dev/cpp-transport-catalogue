@@ -5,13 +5,13 @@ namespace transport_catalogue::backend {
 
     void TransportCatalogue::AddStop(detail::Stop stop) {
         stops_.push_back(stop);
-        detail::Stop* this_stop = &stops_.back();
+        auto this_stop = &stops_.back();
         stopname_to_stop_[std::string_view(this_stop->name)] = this_stop;
     }
 
     void TransportCatalogue::AddBus(detail::Bus bus) {
         buses_.push_back(bus);
-        detail::Bus* this_bus = &buses_.back();
+        auto this_bus = &buses_.back();
         busname_to_bus_[std::string_view(this_bus->name)] = this_bus;
         std::for_each(this_bus->stops.begin(), this_bus->stops.end(), [this_bus](detail::Stop* stop) {
             stop->buses.insert(this_bus);
@@ -20,16 +20,23 @@ namespace transport_catalogue::backend {
 
 
     void TransportCatalogue::AddStopDistances(detail::Stop* stop, std::map<std::string, int> other_stops) {
-        std::for_each(other_stops.begin(), other_stops.end(), [stop, this](const auto& other_stop) {
-            stop->distance_to_stop[GetStop(other_stop.first)->name] = other_stop.second;
+        std::for_each(other_stops.begin(), other_stops.end(), [stop, this](const auto& other_stop_pair) {
+            //берём указатель на вторую ("другую") остановку и расстояние в отдельные переменные
+            auto other_stop = GetStop(other_stop_pair.first);
+            int distance = other_stop_pair.second;
+            distances_[stop][other_stop] = distance;
+            if(distances_.count(other_stop) == 0 || distances_.at(other_stop).count(stop) == 0) {
+                distances_[other_stop][stop] = distance;
+            }
         });
     }
 
-    int TransportCatalogue::GetStopDistance(detail::Stop* stop, detail::Stop* other_stop) {
-        if(stop->distance_to_stop.count(other_stop->name) != 0) {
-            return stop->distance_to_stop.at(other_stop->name);
-        } else if(other_stop->distance_to_stop.count(stop->name) != 0){
-            return other_stop->distance_to_stop.at(stop->name);
+    int TransportCatalogue::GetStopDistance(detail::Stop* first_stop, detail::Stop* second_stop) {
+        //убираем обратную проверку, так как с новым AddStopDistances она не нужна -
+        //в прямом направлении всегда есть расстояние кроме случаев с одной и той же остановкой без расстояния
+        //Используем at() так как нам обещают корректные входные данные
+        if(distances_.at(first_stop).count(second_stop) != 0) {
+            return distances_.at(first_stop).at(second_stop);
         } else {
             return 0;
         }
@@ -69,10 +76,14 @@ namespace transport_catalogue::backend {
         int stop_count = bus->stops.size();
         int length = 0;
         double length_geo = 0;
-        detail::Coordinates temp_coords = {100, 200};
+        //задаём невозможные (больше максимума) координаты
+        double impossible_longitude = 100;
+        double impossible_latitude = 200;
+        detail::Coordinates impossible_coordinates = {impossible_longitude, impossible_latitude};
+        detail::Coordinates temp_coords = impossible_coordinates;
         detail::Stop* prev_stop = nullptr;
-        std::for_each(bus->stops.begin(), bus->stops.end(), [this, &length, &length_geo, &temp_coords, &prev_stop] (auto this_stop) {
-            if(temp_coords == detail::Coordinates{100, 200} && prev_stop == nullptr) {
+        std::for_each(bus->stops.begin(), bus->stops.end(), [this, &length, &length_geo, &temp_coords, &prev_stop, impossible_coordinates] (auto this_stop) {
+            if(temp_coords == impossible_coordinates && prev_stop == nullptr) {
                 temp_coords = this_stop->location;
                 prev_stop = this_stop;
                 return;
