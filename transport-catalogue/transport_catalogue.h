@@ -11,7 +11,7 @@
 #include <string_view>
 #include <algorithm>
 namespace transport_catalogue {
-    namespace detail {
+    namespace detail { 
         struct Bus;
 
         struct Stop {

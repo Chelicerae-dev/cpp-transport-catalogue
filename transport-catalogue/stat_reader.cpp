@@ -1,6 +1,7 @@
 #include "stat_reader.h"
 
 namespace transport_catalogue::output {
+
     StatReader::StatReader(std::istream& input, backend::TransportCatalogue& transport_catalogue) {
         std::string temp_string;
         int queries_count = 0;
@@ -8,16 +9,18 @@ namespace transport_catalogue::output {
         queries_count = std::stoi(temp_string);
         temp_string.clear();
         using namespace std::string_literals;
+        BusWordSize_ = "Bus"s.size();
+        StopWordSize_ = "Stop"s.size();
         while(queries_count != 0) {
             --queries_count;
             std::getline(input, temp_string);
             if(int64_t pos =temp_string.find("Bus"s) != temp_string.npos) {
                 //вместо именованных переменных в методах явным образом прибавляю длину строки (Bus или Stop) к позиции
-                pos += "Bus"s.size();
+                pos += BusWordSize_;
                 ParseBusQuery(transport_catalogue, temp_string, pos);
             } else if(int64_t pos =temp_string.find("Stop"s) != temp_string.npos) {
                 //вместо именованных переменных в методах явным образом прибавляю длину строки (Bus или Stop) к позиции
-                pos += "Stop"s.size();
+                pos += StopWordSize_;
                 ParseStopQuery(transport_catalogue, temp_string, pos);
             }
             temp_string.clear();

@@ -26,6 +26,8 @@ namespace transport_catalogue {
             std::vector<detail::OutputQuery> queries_;
             std::vector<detail::BusInfo> bus_queries_;
             std::vector<detail::StopInfo> stop_queries_;
+            int BusWordSize_;
+            int StopWordSize_;
         };
     }
 }
