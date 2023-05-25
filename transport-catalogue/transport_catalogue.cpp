@@ -59,7 +59,7 @@ namespace transport_catalogue::backend {
             result.stops.push_back(GetStop(stop));
         });
         if(!is_looped) {
-            std::for_each(stop_names.rbegin(), stop_names.rend() - 1, [this, &result](std::string_view stop){
+            std::for_each(stop_names.rbegin() + 1, stop_names.rend(), [this, &result](std::string_view stop){
                 result.stops.push_back(GetStop(stop));
             });
         }
@@ -79,8 +79,8 @@ namespace transport_catalogue::backend {
         //задаём невозможные (больше максимума) координаты
         double impossible_longitude = 100;
         double impossible_latitude = 200;
-        detail::Coordinates impossible_coordinates = {impossible_longitude, impossible_latitude};
-        detail::Coordinates temp_coords = impossible_coordinates;
+        geo::Coordinates impossible_coordinates = {impossible_longitude, impossible_latitude};
+        geo::Coordinates temp_coords = impossible_coordinates;
         detail::Stop* prev_stop = nullptr;
         std::for_each(bus->stops.begin(), bus->stops.end(), [this, &length, &length_geo, &temp_coords, &prev_stop, impossible_coordinates] (auto this_stop) {
             if(temp_coords == impossible_coordinates && prev_stop == nullptr) {
@@ -89,15 +89,15 @@ namespace transport_catalogue::backend {
                 return;
             } else {
                 length += GetStopDistance(prev_stop, this_stop);
-                length_geo += detail::ComputeDistance(temp_coords, this_stop->location);
+                length_geo += geo::ComputeDistance(temp_coords, this_stop->location);
                 temp_coords = this_stop->location;
                 prev_stop = this_stop;
             }
         });
-        if(!bus->is_looped) {
-            length += GetStopDistance(bus->stops[1], bus->stops[0]);
-            length_geo += detail::ComputeDistance(bus->stops[1]->location, bus->stops[0]->location);
-        }
+//        if(!bus->is_looped) {
+//            length += GetStopDistance(bus->stops[1], bus->stops[0]);
+//            length_geo += geo::ComputeDistance(bus->stops[1]->location, bus->stops[0]->location);
+//        }
 
         double curvature = length / length_geo;
 

@@ -1,0 +1,51 @@
+{"base_requests": [{"type": "Stop", "name": "A", "latitude": 55.611087, "longitude": 37.20829, "road_distances": {}}, {"type": "Stop", "name": "B", "latitude": 55.595884, "longitude": 37.209755, "road_distances": {"A": 1000, "C": 1000}}, {"type": "Stop", "name": "C", "latitude": 55.632761, "longitude": 37.333324, "road_distances": {"A": 1000}}, {"type": "Bus", "name": "ABC", "stops": ["A", "B", "C", "A"], "is_roundtrip": true}], "stat_requests": [{"id": 345341928, "type": "Bus", "name": "ABC"}]}
+{
+    "base_requests": [
+        {
+            "latitude": 55.6111,
+            "longitude": 37.2083,
+            "name": "A",
+            "road_distances": {
+
+            },
+            "type": "Stop"
+        },
+        {
+            "latitude": 55.5959,
+            "longitude": 37.2098,
+            "name": "B",
+            "road_distances": {
+                "A": 1000,
+                "C": 1000
+            },
+            "type": "Stop"
+        },
+        {
+            "latitude": 55.6328,
+            "longitude": 37.3333,
+            "name": "C",
+            "road_distances": {
+                "A": 1000
+            },
+            "type": "Stop"
+        },
+        {
+            "is_roundtrip": true,
+            "name": "ABC",
+            "stops": [
+                "A",
+                "B",
+                "C",
+                "A"
+            ],
+            "type": "Bus"
+        }
+    ],
+    "stat_requests": [
+        {
+            "id": 345341928,
+            "name": "ABC",
+            "type": "Bus"
+        }
+    ]
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "geo.h"
+#include "domain.h"
 #include <deque>
 #include <list>
 #include <set>
@@ -10,63 +11,8 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
+
 namespace transport_catalogue {
-    namespace detail { 
-        struct Bus;
-
-        struct Stop {
-            std::string name;
-            Coordinates location;
-            std::set<Bus*> buses{};
-            //std::map<std::string_view, int> distance_to_stop{};
-            bool operator<(Stop another) {
-                return (this->name < another.name);
-            }
-        };
-
-        struct Bus {
-            std::string name;
-            std::vector<Stop*> stops;
-            bool is_looped;
-        };
-
-        struct BusCreationQuery {
-            std::string name;
-            std::vector<std::string> stops;
-            bool is_looped;
-
-        };
-
-        struct BusInfo {
-            std::string_view name;
-            int stop_count;
-            int unique_stop_count;
-            int length;
-            double curvature;
-        };
-
-        struct StopInfo {
-            std::string_view name;
-            std::set<std::string> buses;
-        };
-
-        struct StopDistancesQuery {
-            std::string name;
-            std::map<std::string, int> distances;
-        };
-
-        enum QueryType {
-            BusQuery, StopQuery
-        };
-
-        struct OutputQuery {
-            std::string name;
-            size_t place;
-            QueryType type;
-            bool exists;
-        };
-    }
-
     namespace backend {
     class TransportCatalogue {
 
