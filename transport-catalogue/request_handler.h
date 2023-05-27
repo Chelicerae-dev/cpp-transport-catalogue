@@ -10,9 +10,23 @@
 
 namespace transport_catalogue {
     namespace output {
-        json::Dict GetBusQuery(const std::string& name, int id, backend::TransportCatalogue& transport_catalogue);
-        json::Dict GetStopQuery(const std::string& name, int id, backend::TransportCatalogue& transport_catalogue);
-        void PrintRequests(std::ostream& os, input::JsonReader& requests, backend::TransportCatalogue& transport_catalogue);
+        class RequestHander {
+        public:
+            RequestHander(backend::TransportCatalogue& tc);
+
+            void PrintRequests(std::ostream& os, input::JsonReader& requests);
+            std::vector<std::vector<geo::Coordinates>> GetCoordinates();
+        private:
+            backend::TransportCatalogue* transport_catalogue_;
+
+            json::Dict GetBusQuery(const std::string& name, int id);
+            json::Dict GetStopQuery(const std::string& name, int id);
+        };
+
+//        json::Dict GetBusQuery(const std::string& name, int id, backend::TransportCatalogue& transport_catalogue);
+//        json::Dict GetStopQuery(const std::string& name, int id, backend::TransportCatalogue& transport_catalogue);
+//        void PrintRequests(std::ostream& os, input::JsonReader& requests, backend::TransportCatalogue& transport_catalogue);
+//        std::vector<std::vector<geo::Coordinates>> CoordinatesToRender(const backend::TransportCatalogue& transport_catalogue);
     }
 }
 

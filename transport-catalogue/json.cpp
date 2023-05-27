@@ -63,9 +63,11 @@ Node LoadInt(istream& input) {
     char c;
     input >> c;
     line.push_back(c);
-    while(std::isdigit(input.peek()) || input.peek() == '-' || input.peek() == '+' || input.peek() == '.'  || input.peek() == 'e' || input.peek() == 'E') {
+    char peek = input.peek();
+    while(std::isdigit(peek) || peek == '-' || peek == '+' || peek == '.'  || peek == 'e' || peek == 'E') {
         input >> c;
         line.push_back(c);
+        peek = input.peek();
         if(!std::isdigit(c)) is_int = false;
     }
 

@@ -32,6 +32,8 @@ namespace transport_catalogue {
             detail::BusInfo GetBusInfo(detail::Bus* bus);
             detail::StopInfo GetStopInfo(detail::Stop* stop);
 
+            std::vector<detail::Bus*> GetAllBuses();
+
         private:
             std::list<detail::Stop> stops_;
             std::unordered_map<std::string_view, detail::Stop*> stopname_to_stop_;

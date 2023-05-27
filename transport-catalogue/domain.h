@@ -5,6 +5,7 @@
 #include <set>
 #include <vector>
 #include <map>
+#include <optional>
 
 
 namespace transport_catalogue {
@@ -25,6 +26,7 @@ namespace transport_catalogue {
             std::string name;
             std::vector<Stop*> stops;
             bool is_looped;
+            bool operator<(const Bus& other);
         };
 
         struct BusCreationQuery {
@@ -57,11 +59,12 @@ namespace transport_catalogue {
         };
 
         struct OutputQuery {
+            OutputQuery() = default;
+            OutputQuery(int64_t id, std::string type);
+            OutputQuery(int64_t id, std::string type, std::string name);
             int64_t id;
-            std::string name;
-//            size_t place;
             std::string type;
-//            bool exists;
+            std::optional<std::string> name;
         };
 
 
