@@ -25,11 +25,6 @@ namespace transport_catalogue {
             json::Dict GetStopQuery(const std::string& name, int id);
             json::Dict GetMap(int id, render::MapRenderer& renderer);
         };
-
-//        json::Dict GetBusQuery(const std::string& name, int id, backend::TransportCatalogue& transport_catalogue);
-//        json::Dict GetStopQuery(const std::string& name, int id, backend::TransportCatalogue& transport_catalogue);
-//        void PrintRequests(std::ostream& os, input::JsonReader& requests, backend::TransportCatalogue& transport_catalogue);
-//        std::vector<std::vector<geo::Coordinates>> CoordinatesToRender(const backend::TransportCatalogue& transport_catalogue);
     }
 }
 

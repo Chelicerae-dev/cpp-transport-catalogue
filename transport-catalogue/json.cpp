@@ -71,24 +71,6 @@ Node LoadInt(istream& input) {
         if(!std::isdigit(c)) is_int = false;
     }
 
-//    for (; input >> c && (std::isdigit(c) || c == '-' || c == '+' || c =='.' || c == 'e' || c == 'E');) {
-
-//        line.push_back(c);
-////        char ch = input.peek();
-//        if(input.peek() == ']' || input.peek() == '}' || input.peek() == ',') {
-//            break;
-//        }
-////            strm.clear();
-//    }
-//    result.push_back((LoadNode(strm)));
-//    char peek = input.peek();
-//    if(peek != '\n' || peek != ' ' || peek != '\r' || peek != '\t' || peek != ',' || peek != '}' || peek != ']') {
-//    } else if(c == ']' || c == '}' || c == ',') {
-//        input.putback(c);
-//    } else if(!std::isdigit(c)){
-//        throw ParsingError("Number loading error - occured "s + c + " symbol"s);
-//    }
-//    bool is_int = line.find('.') == line.npos && line.find('e') == line.npos;
     return is_int ? Node(std::stoi(line)) : Node(std::stod(line));
 }
 
@@ -155,7 +137,6 @@ Node LoadArray(istream& input) {
         return Node(Array{});
     }
     Array result;
-//    std::stringstream strm;
     char c = 0;
     for (;input >> c && c != ']';) {
         if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
@@ -163,9 +144,6 @@ Node LoadArray(istream& input) {
         }
         if(c == '}') {
             continue;
-        }
-        if(c == 4) {
-            throw ParsingError("End of text before closing ]"s);
         }
         if (c != ',') {
             input.putback(c);
@@ -197,10 +175,8 @@ Node LoadDict(istream& input) {
     if(c != '}') {
         throw ParsingError("Closing } not found"s);
     }
-//    input >> c;
     return Node(std::move(result));
 }
-
 
 Node LoadNode(istream& input) {
     char c;
@@ -228,7 +204,6 @@ Node LoadNode(istream& input) {
     }
 }
 
-//}  // namespace
 
 Node::Node(std::nullptr_t) {
     value_.emplace<std::nullptr_t>(nullptr);
@@ -257,7 +232,6 @@ Node::Node(Array array) {
 Node::Node(Dict map) {
     value_.emplace<Dict>(map);
 }
-
 
 
 bool Node::IsInt() const {

@@ -33,11 +33,6 @@ namespace transport_catalogue ::render {
     void MapRenderer::SetCoordinates(const std::vector<detail::BusCoordinates>& buses, const std::vector<detail::Stop*>& stops) {
         //должен быть менее затратный способ создать SphereProjector, но вложенные векторы не хранятся последовательно
         std::vector<geo::Coordinates> all_coords;
-//        for(const auto& [bus, stops] : buses) {
-//            for(const geo::Coordinates& stop_coords : stops) {
-//                all_coords.push_back(stop_coords);
-//            }
-//        }
         //используем отановки чтобы избежать дублирования координат для инициализации
         for(const detail::Stop* stop : stops) {
             all_coords.push_back(stop->location);

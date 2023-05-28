@@ -11,7 +11,7 @@ int main() {
     transport_catalogue::render::MapRenderer map_renderer(requests.GetRenderSettings());
     map_renderer.SetCoordinates(request_handler.GetCoordinates(), request_handler.GetStops());
     request_handler.PrintRequests(std::cout, requests, map_renderer);
-//    map_renderer.Print(std::cout);
+
     /*
      * Примерная структура программы:
      *
