@@ -42,7 +42,16 @@ namespace transport_catalogue::output {
         return result;
     }
 
-    void RequestHander::PrintRequests(std::ostream& os, input::JsonReader& requests) {
+    json::Dict RequestHander::GetMap(int id, render::MapRenderer& renderer) {
+        json::Dict result;
+        result["request_id"] = json::Node(id);
+        std::stringstream strm;
+        renderer.Print(strm);
+        result["map"] = strm.str();
+        return result;
+    }
+
+    void RequestHander::PrintRequests(std::ostream& os, input::JsonReader& requests, render::MapRenderer& renderer) {
         json::Array output;
         detail::OutputQuery temp;
         while(requests.GetQuery(temp)) {
@@ -50,6 +59,8 @@ namespace transport_catalogue::output {
                 output.push_back(json::Node(GetBusQuery(*temp.name, temp.id)));
             } else if(temp.type == "Stop") {
                 output.push_back(json::Node(GetStopQuery(*temp.name, temp.id)));
+            } else if(temp.type == "Map") {
+                output.push_back(json::Node(GetMap(temp.id, renderer)));
             }
         }
         json::Print(json::Document(output), os);

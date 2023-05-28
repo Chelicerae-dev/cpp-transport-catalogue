@@ -14,7 +14,7 @@ namespace transport_catalogue {
         public:
             RequestHander(backend::TransportCatalogue& tc);
 
-            void PrintRequests(std::ostream& os, input::JsonReader& requests);
+            void PrintRequests(std::ostream& os, input::JsonReader& requests, render::MapRenderer& renderer);
             std::vector<detail::BusCoordinates> GetCoordinates();
             std::vector<detail::Stop*> GetStops();
 
@@ -23,6 +23,7 @@ namespace transport_catalogue {
 
             json::Dict GetBusQuery(const std::string& name, int id);
             json::Dict GetStopQuery(const std::string& name, int id);
+            json::Dict GetMap(int id, render::MapRenderer& renderer);
         };
 
 //        json::Dict GetBusQuery(const std::string& name, int id, backend::TransportCatalogue& transport_catalogue);

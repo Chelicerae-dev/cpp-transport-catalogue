@@ -359,35 +359,35 @@ void PrintValue(bool val, std::ostream& out) {
 void PrintValue(const Array& array, std::ostream& out) {
     using namespace std::literals;
     bool first = true;
-    out << '[';
+    out << "[\n"sv;
     for(size_t i = 0; i < array.size(); ++i) {
         if(first) {
             PrintNode(array[i], out);
             first = false;
         } else {
-            out << ", "sv;
+            out << ", \n"sv;
             PrintNode(array[i], out);
         }
     }
-    out << ']';
+    out << "\n]"sv;
 }
 
 
 void PrintValue(const Dict& dict, std::ostream& out) {
     using namespace std::literals;
     bool first = true;
-    out << "{"sv;
+    out << "{\n"sv;
     for(const auto& [key, val] : dict) {
         if(first) {
-            out << '"' << key << "\":"sv;
+            out << '"' << key << "\": "sv;
             PrintNode(val, out);
             first = false;
         } else {
-            out << ", \""sv << key << "\":"sv;
+            out << ", \n\""sv << key << "\": "sv;
             PrintNode(val, out);
         }
     }
-    out << "}"sv;
+    out << "\n}"sv;
 }
 
 void PrintNode(const Node& node, std::ostream& out) {
