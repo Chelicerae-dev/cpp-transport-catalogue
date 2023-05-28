@@ -302,7 +302,7 @@ private:
 };
 
 bool operator<(Rgb lhs, Rgb rhs);
-
 bool operator<(Rgba lhs, Rgba rhs);
+bool operator!=(Point lhs, Point rhs);
 }
 // namespace svg

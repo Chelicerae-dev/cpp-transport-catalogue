@@ -33,6 +33,7 @@ namespace transport_catalogue {
             detail::StopInfo GetStopInfo(detail::Stop* stop);
 
             std::vector<detail::Bus*> GetAllBuses();
+            std::vector<detail::Stop*> GetAllStops();
 
         private:
             std::list<detail::Stop> stops_;

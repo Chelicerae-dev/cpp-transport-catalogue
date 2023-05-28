@@ -13,6 +13,11 @@
 
 namespace transport_catalogue::render {
 
+    struct SvgBusCoordinates {
+        detail::Bus* bus;
+        std::vector<svg::Point> coords;
+    };
+
     class ColorIterator {
     public:
         ColorIterator(std::vector<svg::Color>& palette);
@@ -98,10 +103,10 @@ namespace transport_catalogue::render {
         double stop_radius = 0.0;
 
         int bus_label_font_size = 0;
-        std::array<double, 2> bus_label_offset = {0.0};
+        svg::Point bus_label_offset = {0.0, 0.0};
 
         int stop_label_font_size = 0;
-        std::array<double, 2> stop_label_offset = {0.0, 0.0};
+        svg::Point stop_label_offset = {0.0, 0.0};
 
         svg::Color underlayer_color;
         double underlayer_width = 0.0;
@@ -111,18 +116,22 @@ namespace transport_catalogue::render {
 
     class MapRenderer {
     public:
-        MapRenderer() = default;
+        MapRenderer() = delete;
         MapRenderer(const RenderSettings& render_settings);
-        void SetCoordinates(const std::vector<std::vector<geo::Coordinates>>& coords);
+        void SetCoordinates(const std::vector<detail::BusCoordinates>& buses, const std::vector<detail::Stop*>& stops);
         void Print(std::ostream& os);
 
 
     private:
         RenderSettings render_settings_;
         svg::Document canvas_;
-        std::vector<std::vector<svg::Point>> coordinates_;
+        std::vector<SvgBusCoordinates> bus_coords_;
+        std::map<std::string, svg::Point> stop_coords_;
 
         svg::Polyline BusPoly(const std::vector<svg::Point>& coords, const svg::Color& color);
+        svg::Text BusName(const std::string& name, const svg::Point& loc, const svg::Color& color, bool is_underlayer);
+        svg::Circle Stop(const svg::Point& point);
+        svg::Text StopName(const std::string& name, const svg::Point& point, bool is_underlayer);
         void Render();
     };
 

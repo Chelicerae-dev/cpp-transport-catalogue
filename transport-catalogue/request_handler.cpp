@@ -55,17 +55,26 @@ namespace transport_catalogue::output {
         json::Print(json::Document(output), os);
     }
 
-    std::vector<std::vector<geo::Coordinates>> RequestHander::GetCoordinates() {
-        std::vector<std::vector<geo::Coordinates>> result;
+    std::vector<detail::BusCoordinates> RequestHander::GetCoordinates() {
+        std::vector<detail::BusCoordinates> result;
         std::vector<detail::Bus*> buses = transport_catalogue_->GetAllBuses();
         for(detail::Bus* bus : buses) {
             std::vector<geo::Coordinates> coords;
             for(detail::Stop* stop : bus->stops) {
                 coords.push_back(stop->location);
             }
-            result.push_back(coords);
+            if(!bus->is_looped) {
+                std::for_each(bus->stops.rbegin() + 1, bus->stops.rend(), [this, &coords](detail::Stop* stop){
+                    coords.push_back(stop->location);
+                });
+            }
+            result.push_back({bus, coords});
         }
         return result;
+    }
+
+    std::vector<detail::Stop*> RequestHander::GetStops() {
+        return transport_catalogue_->GetAllStops();
     }
 }
 

@@ -103,7 +103,7 @@ void Circle::RenderObject(const RenderContext& context) const {
     out << "<circle cx=\""sv << center_.x << "\" cy=\""sv << center_.y << "\" "sv;
     out << "r=\""sv << radius_ << '"';
     RenderAttrs(out);
-    out << " />"sv;
+    out << "/>"sv;
 }
 
 // ------------Polyline---------------
@@ -167,7 +167,9 @@ Text& Text::SetData(std::string data) {
 // Прочие данные и методы, необходимые для реализации элемента <text>
 void Text::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
-    out << "<text x=\""sv << pos_.x << "\" y=\""sv << pos_.y << '"';
+    out << "<text"sv;
+    RenderAttrs(out);
+    out << " x=\""sv << pos_.x << "\" y=\""sv << pos_.y << '"';
 //    if(offset_.x != 0 && offset_.y != 0) {
         out << " dx=\""sv << offset_.x << "\" dy=\""sv << offset_.y << "\""sv;
 //    }
@@ -178,11 +180,11 @@ void Text::RenderObject(const RenderContext& context) const {
     if(font_weight_.size() != 0) {
         out << " font-weight=\""sv << font_weight_ << '"';
     }
-    RenderAttrs(out);
+
     out << '>' << data_ << "</text>"sv;
 }
 
-// ------------------ Document -----------------------
+ // ------------------ Document -----------------------
 /*
  Метод Add добавляет в svg-документ любой объект-наследник svg::Object.
  Пример использования:
@@ -214,6 +216,10 @@ bool operator<(Rgb lhs, Rgb rhs) {
 
 bool operator<(Rgba lhs, Rgba rhs) {
     return lhs.red < rhs.red || lhs.green < rhs.green || lhs.blue < rhs.blue || lhs.opacity < rhs.opacity;
+}
+
+bool operator!=(Point lhs, Point rhs) {
+    return lhs.x != rhs.x || lhs.y != rhs.y;
 }
 
 }  // namespace svg

@@ -15,7 +15,9 @@ namespace transport_catalogue {
             RequestHander(backend::TransportCatalogue& tc);
 
             void PrintRequests(std::ostream& os, input::JsonReader& requests);
-            std::vector<std::vector<geo::Coordinates>> GetCoordinates();
+            std::vector<detail::BusCoordinates> GetCoordinates();
+            std::vector<detail::Stop*> GetStops();
+
         private:
             backend::TransportCatalogue* transport_catalogue_;
 

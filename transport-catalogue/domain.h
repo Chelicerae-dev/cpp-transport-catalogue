@@ -67,6 +67,11 @@ namespace transport_catalogue {
             std::optional<std::string> name;
         };
 
+        struct BusCoordinates {
+            Bus* bus;
+            std::vector<geo::Coordinates> coords;
+        };
+
 
     }
 

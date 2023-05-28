@@ -58,11 +58,11 @@
             std::for_each(stop_names.begin(), stop_names.end(), [this, &result](std::string_view stop){
                 result.stops.push_back(GetStop(stop));
             });
-            if(!is_looped) {
-                std::for_each(stop_names.rbegin() + 1, stop_names.rend(), [this, &result](std::string_view stop){
-                    result.stops.push_back(GetStop(stop));
-                });
-            }
+//            if(!is_looped) {
+//                std::for_each(stop_names.rbegin() + 1, stop_names.rend(), [this, &result](std::string_view stop){
+//                    result.stops.push_back(GetStop(stop));
+//                });
+//            }
             result.is_looped = is_looped;
             return result;
         }
@@ -71,9 +71,15 @@
             return MakeBus(query.name, query.stops, query.is_looped);
         }
 
-        detail::BusInfo TransportCatalogue::GetBusInfo(detail::Bus* bus) {
-            std::string_view name = bus->name;
-            int stop_count = bus->stops.size();
+        detail::BusInfo TransportCatalogue::GetBusInfo(detail::Bus* original) {
+            detail::Bus bus = *original;
+            if(!bus.is_looped) {
+                std::for_each(original->stops.rbegin() + 1, original->stops.rend(), [this, &bus](detail::Stop* stop){
+                    bus.stops.push_back(stop);
+                });
+            }
+            std::string_view name = bus.name;
+            int stop_count = bus.stops.size();
             int length = 0;
             double length_geo = 0;
             //задаём невозможные (больше максимума) координаты
@@ -82,7 +88,7 @@
             geo::Coordinates impossible_coordinates = {impossible_longitude, impossible_latitude};
             geo::Coordinates temp_coords = impossible_coordinates;
             detail::Stop* prev_stop = nullptr;
-            std::for_each(bus->stops.begin(), bus->stops.end(), [this, &length, &length_geo, &temp_coords, &prev_stop, impossible_coordinates] (auto this_stop) {
+            std::for_each(bus.stops.begin(), bus.stops.end(), [this, &length, &length_geo, &temp_coords, &prev_stop, impossible_coordinates] (auto this_stop) {
                 if(temp_coords == impossible_coordinates && prev_stop == nullptr) {
                     temp_coords = this_stop->location;
                     prev_stop = this_stop;
@@ -96,7 +102,7 @@
             });
             double curvature = length / length_geo;
 
-            std::vector<detail::Stop*> temp(bus->stops);
+            std::vector<detail::Stop*> temp(bus.stops);
             std::sort(temp.begin(), temp.end());
             int unique_stop_count = std::distance(temp.begin(), std::unique(temp.begin(), temp.end()));
             return {name, stop_count, unique_stop_count, length, curvature};
@@ -117,6 +123,19 @@
                 result.push_back(&bus);
             }
             std::sort(result.begin(), result.end(), [](detail::Bus* lhs, detail::Bus* rhs){
+                return lhs->name < rhs->name;
+            });
+            return result;
+        }
+
+        std::vector<detail::Stop*> TransportCatalogue::GetAllStops() {
+            std::vector<detail::Stop*> result;
+            for(detail::Stop& stop : stops_) {
+                if(stop.buses.size() != 0) {
+                    result.push_back(&stop);
+                }
+            }
+            std::sort(result.begin(), result.end(), [](detail::Stop* lhs, detail::Stop* rhs){
                 return lhs->name < rhs->name;
             });
             return result;

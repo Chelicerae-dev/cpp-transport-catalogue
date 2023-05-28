@@ -97,8 +97,10 @@ namespace transport_catalogue::input {
         if(node.count("padding") != 0) render_settings_.padding = node.at("padding").AsDouble();
         if(node.count("line_width") != 0) render_settings_.line_width = node.at("line_width").AsDouble();
         if(node.count("stop_radius") != 0) render_settings_.stop_radius = node.at("stop_radius").AsDouble();
+        if(node.count("bus_label_offset") != 0) render_settings_.bus_label_offset = {node.at("bus_label_offset").AsArray()[0].AsDouble(), node.at("bus_label_offset").AsArray()[1].AsDouble()};
         if(node.count("bus_label_font_size") != 0) render_settings_.bus_label_font_size = node.at("bus_label_font_size").AsInt();
         if(node.count("stop_label_offset") != 0) render_settings_.stop_label_offset = {node.at("stop_label_offset").AsArray()[0].AsDouble(), node.at("stop_label_offset").AsArray()[1].AsDouble()};
+        if(node.count("stop_label_font_size") != 0) render_settings_.stop_label_font_size = node.at("stop_label_font_size").AsInt();
         if(node.count("underlayer_color") != 0) render_settings_.underlayer_color = ParseSvgColor(node.at("underlayer_color"));
         if(node.count("underlayer_width") != 0) render_settings_.underlayer_width = node.at("underlayer_width").AsDouble();
         if(node.count("color_palette") != 0) {
@@ -117,10 +119,6 @@ namespace transport_catalogue::input {
             if(temp.size() == 3) {
                 return svg::Rgb(temp[0].AsInt(), temp[1].AsInt(), temp[2].AsInt());
             } else { //так же, как и выше
-                int r = temp[0].AsInt();
-                int g = temp[1].AsInt();
-                int b = temp[2].AsInt();
-                double op = temp[3].AsDouble();
                 return svg::Rgba(temp[0].AsInt(), temp[1].AsInt(), temp[2].AsInt(), temp[3].AsDouble());
             }
         }
