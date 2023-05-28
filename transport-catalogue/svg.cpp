@@ -124,7 +124,7 @@ void Polyline::RenderObject(const RenderContext& context) const {
     }
     out << '"';
     RenderAttrs(out);
-    out << "/>"sv; //тот самый убранный пробел
+    out << "/>"sv;
 }
 
 // -------------Text ----------------
@@ -191,9 +191,6 @@ void Text::RenderObject(const RenderContext& context) const {
  Document doc;
  doc.Add(Circle().SetCenter({20, 30}).SetRadius(15));
 */
-//Document::Document(RenderContext& context)
-//    : context_(context) {
-//}
 
 // Добавляет в svg-документ объект-наследник svg::Object
 void Document::AddPtr(std::unique_ptr<Object>&& obj) {

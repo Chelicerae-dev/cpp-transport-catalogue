@@ -32,9 +32,6 @@
         }
 
         int TransportCatalogue::GetStopDistance(detail::Stop* first_stop, detail::Stop* second_stop) {
-            //убираем обратную проверку, так как с новым AddStopDistances она не нужна -
-            //в прямом направлении всегда есть расстояние кроме случаев с одной и той же остановкой без расстояния
-            //Используем at() так как нам обещают корректные входные данные
             if(distances_.at(first_stop).count(second_stop) != 0) {
                 return distances_.at(first_stop).at(second_stop);
             } else {
@@ -58,11 +55,6 @@
             std::for_each(stop_names.begin(), stop_names.end(), [this, &result](std::string_view stop){
                 result.stops.push_back(GetStop(stop));
             });
-//            if(!is_looped) {
-//                std::for_each(stop_names.rbegin() + 1, stop_names.rend(), [this, &result](std::string_view stop){
-//                    result.stops.push_back(GetStop(stop));
-//                });
-//            }
             result.is_looped = is_looped;
             return result;
         }

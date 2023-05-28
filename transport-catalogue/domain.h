@@ -16,7 +16,6 @@ namespace transport_catalogue {
             std::string name;
             geo::Coordinates location;
             std::set<Bus*> buses{};
-            //std::map<std::string_view, int> distance_to_stop{};
             bool operator<(Stop another) {
                 return (this->name < another.name);
             }
