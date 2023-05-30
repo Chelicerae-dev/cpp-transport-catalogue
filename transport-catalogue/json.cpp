@@ -205,111 +205,99 @@ Node LoadNode(istream& input) {
 }
 
 
-Node::Node(std::nullptr_t) {
-    value_.emplace<std::nullptr_t>(nullptr);
-}
+//Node::Node(std::nullptr_t) {
+//    value_.emplace<std::nullptr_t>(nullptr);
+//}
 
-Node::Node(std::string value){
-    value_.emplace<std::string>(value);
-}
+//Node::Node(std::string value){
+//    value_.emplace<std::string>(value);
+//}
 
-Node::Node(bool value) {
-    value_.emplace<bool>(value);
-}
+//Node::Node(bool value) {
+//    value_.emplace<bool>(value);
+//}
 
-Node::Node(int value) {
-    value_.emplace<int>(value);
-}
+//Node::Node(int value) {
+//    value_.emplace<int>(value);
+//}
 
-Node::Node(double value) {
-    value_.emplace<double>(value);
-}
+//Node::Node(double value) {
+//    value_.emplace<double>(value);
+//}
 
-Node::Node(Array array) {
-    value_.emplace<Array>(array);
-}
+//Node::Node(Array array) {
+//    value_.emplace<Array>(array);
+//}
 
-Node::Node(Dict map) {
-    value_.emplace<Dict>(map);
-}
+//Node::Node(Dict map) {
+//    value_.emplace<Dict>(map);
+//}
 
 
 bool Node::IsInt() const {
-    return holds_alternative<int>(value_);
+    return holds_alternative<int>(*this);
 }
 bool Node::IsDouble() const {
-    return holds_alternative<int>(value_) || holds_alternative<double>(value_);
+    return holds_alternative<int>(*this) || holds_alternative<double>(*this);
 }
 bool Node::IsPureDouble() const {
-    return holds_alternative<double>(value_);
+    return holds_alternative<double>(*this);
 }
 bool Node::IsBool() const {
-    return holds_alternative<bool>(value_);
+    return holds_alternative<bool>(*this);
 }
 bool Node::IsString() const {
-    return holds_alternative<std::string>(value_);
+    return holds_alternative<std::string>(*this);
 }
 bool Node::IsNull() const {
-    return holds_alternative<std::nullptr_t>(value_);
+    return holds_alternative<std::nullptr_t>(*this);
 }
 bool Node::IsArray() const {
-    return holds_alternative<Array>(value_);
+    return holds_alternative<Array>(*this);
 }
 bool Node::IsMap() const {
-    return holds_alternative<Dict>(value_);
+    return holds_alternative<Dict>(*this);
 }
 
 std::string Node::AsString() const {
     if(!IsString()) {
         throw std::logic_error("Not a string"s);
     }
-    return get<std::string>(value_);
-//    return Escaped(get<std::string>(value_));
+    return std::get<std::string>(*this);
 }
 int Node::AsInt() const {
     if(!IsInt()) {
         throw std::logic_error("Not an int"s);
     }
-    return get<int>(value_);
+    return std::get<int>(*this);
 }
 bool Node::AsBool() const {
     if(!IsBool()) {
         throw std::logic_error("Not a bool"s);
     }
-    return get<bool>(value_);
+    return std::get<bool>(*this);
 }
 double Node::AsDouble() const {
     if(!IsDouble()) {
         throw std::logic_error("Not a double"s);
     }
     if(IsPureDouble()) {
-        return get<double>(value_);
+        return std::get<double>(*this);
     } else {
-        return get<int>(value_) * 1.0;
+        return std::get<int>(*this) * 1.0;
     }
 }
 const Array& Node::AsArray() const {
     if(!IsArray()) {
         throw std::logic_error("Not an array"s);
     }
-    return get<Array>(value_);
+    return std::get<Array>(*this);
 }
 const Dict& Node::AsMap() const {
     if(!IsMap()) {
         throw std::logic_error("Not a map"s);
     }
-    return get<Dict>(value_);
-}
-
-const Node::Value& Node::GetValue() const {
-    return value_;
-}
-
-bool Node::operator!=(const Node& other) {
-    return value_ != other.value_;
-}
-bool Node::operator==(const Node& other) {
-    return value_ == other.value_;
+    return std::get<Dict>(*this);
 }
 
 void PrintValue(std::nullptr_t, std::ostream& out) {
@@ -328,6 +316,14 @@ void PrintValue(bool val, std::ostream& out) {
     } else {
         out << "false"s;
     }
+}
+
+void PrintValue(int val, std::ostream& out) {
+    out << val;
+}
+
+void PrintValue(double val, std::ostream& out) {
+    out << val;
 }
 
 void PrintValue(const Array& array, std::ostream& out) {
@@ -367,7 +363,7 @@ void PrintValue(const Dict& dict, std::ostream& out) {
 void PrintNode(const Node& node, std::ostream& out) {
     std::visit(
         [&out](const auto& value){ PrintValue(value, out); },
-        node.GetValue());
+        static_cast<Value>(node));
 }
 
 Document::Document(Node root)
@@ -386,15 +382,8 @@ void Print(const Document& doc, std::ostream& output) {
     (void) &doc;
     (void) &output;
     PrintNode(doc.GetRoot(), output);
-    // Реализуйте функцию самостоятельно
 }
 
-bool operator==(const Node& node1, const Node& node2) {
-    return node1.GetValue() == node2.GetValue();
-}
-bool operator!=(const Node& node1, const Node& node2) {
-    return node1.GetValue() != node2.GetValue();
-}
 bool operator==(const Document& doc1, const Document& doc2) {
     return doc1.GetRoot() == doc2.GetRoot();
 }

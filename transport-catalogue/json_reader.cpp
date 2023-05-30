@@ -1,15 +1,16 @@
 #include "json_reader.h"
 
 namespace transport_catalogue::input {
-    JsonReader::JsonReader(json::Document input, backend::TransportCatalogue& transport_catalogue) {
+    JsonReader::JsonReader(json::Document input, backend::TransportCatalogue& transport_catalogue)
+        : catalogue_(&transport_catalogue) {
         json::Dict input_data = input.GetRoot().AsMap();
         json::Array input_requests = input_data.at("base_requests").AsArray();
         json::Array output_requests;
         if(input_data.count("stat_requests") != 0) output_requests = input_data.at("stat_requests").AsArray();
-        std::for_each(input_requests.begin(), input_requests.end(), [this, &transport_catalogue](const json::Node& node){
+        std::for_each(input_requests.begin(), input_requests.end(), [this](const json::Node& node){
             json::Dict query = node.AsMap();
             if(query.at("type").AsString() == "Stop") {
-                ParseStop(transport_catalogue, &query);
+                ParseStop(&query);
             } else {
                 ParseBus(&query);
             }
@@ -37,7 +38,51 @@ namespace transport_catalogue::input {
         if(input_data.count("render_settings") != 0) ParseRenderSettings(input_data.at("render_settings").AsMap());
     }
 
-    void JsonReader::ParseStop(backend::TransportCatalogue& transport_catalogue, json::Dict* node) {
+    json::Dict JsonReader::GetBusQuery(const std::string& name, int id) {
+        json::Dict result;
+        result["request_id"] = json::Node(id);
+        detail::Bus* bus = catalogue_->GetBus(name);
+        if(bus == nullptr) {
+            using namespace std::literals;
+            result["error_message"] = json::Node("not found"s);
+        } else {
+            detail::BusInfo bus_info = catalogue_->GetBusInfo(bus);
+            result["curvature"] = json::Node(bus_info.curvature);
+            result["route_length"] = json::Node(bus_info.length);
+            result["stop_count"] = json::Node(bus_info.stop_count);
+            result["unique_stop_count"] = json::Node(bus_info.unique_stop_count);
+        }
+        return result;
+    }
+
+    json::Dict JsonReader::GetStopQuery(const std::string& name, int id) {
+        json::Dict result;
+        result["request_id"] = json::Node(id);
+        detail::Stop* stop = catalogue_->GetStop(name);
+        if(stop == nullptr) {
+            using namespace std::literals;
+            result["error_message"] = json::Node("not found"s);
+        } else {
+            detail::StopInfo stop_info = catalogue_->GetStopInfo(stop);
+            json::Array buses;
+            for(const std::string& bus : stop_info.buses) {
+                buses.push_back(json::Node(bus));
+            }
+            result["buses"] = std::move(buses);
+        }
+        return result;
+    }
+
+    json::Dict JsonReader::GetMap(int id, render::MapRenderer& renderer) {
+        json::Dict result;
+        result["request_id"] = json::Node(id);
+        std::stringstream strm;
+        renderer.Print(strm);
+        result["map"] = strm.str();
+        return result;
+    }
+
+    void JsonReader::ParseStop(json::Dict* node) {
         //получаем имя остановки
         std::string name = node->at("name").AsString();
         double longitude = node->at("longitude").AsDouble();
@@ -48,7 +93,7 @@ namespace transport_catalogue::input {
             ParseDistances(name, &distances);
         }
         //создаём остановку
-        transport_catalogue.AddStop({std::move(name), {latitude, longitude}});
+        catalogue_->AddStop({std::move(name), {latitude, longitude}});
     }
 
     void JsonReader::ParseDistances(std::string_view name, json::Dict* node) {

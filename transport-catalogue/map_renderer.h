@@ -121,7 +121,6 @@ namespace transport_catalogue::render {
         void SetCoordinates(const std::vector<detail::BusCoordinates>& buses, const std::vector<detail::Stop*>& stops);
         void Print(std::ostream& os);
 
-
     private:
         RenderSettings render_settings_;
         svg::Document canvas_;
@@ -136,8 +135,3 @@ namespace transport_catalogue::render {
     };
 
 }
-/*
- * В этом файле вы можете разместить код, отвечающий за визуализацию карты маршрутов в формате SVG.
- * Визуализация маршрутов вам понадобится во второй части итогового проекта.
- * Пока можете оставить файл пустым.
- */
