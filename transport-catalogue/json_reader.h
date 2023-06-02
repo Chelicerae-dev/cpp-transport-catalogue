@@ -2,22 +2,25 @@
 
 #include <iostream>
 #include <string>
+#include <functional>
 
 #include "json.h"
-#include "transport_catalogue.h"
+#include "domain.h"
 #include "map_renderer.h"
+#include "transport_catalogue.h"
 
 namespace transport_catalogue::input {
     class JsonReader {
     public:
         JsonReader() = default;
-        JsonReader(json::Document input, backend::TransportCatalogue& transport_catalogue);
+        JsonReader(backend::TransportCatalogue& transport_catalogue, json::Document& input);
         bool GetQuery(detail::OutputQuery& output);
         const render::RenderSettings& GetRenderSettings() const;
 
-        json::Dict GetBusQuery(const std::string& name, int id);
-        json::Dict GetStopQuery(const std::string& name, int id);
-        json::Dict GetMap(int id, render::MapRenderer& renderer);
+        //метод для обработки всех запросов из JSON и ответа в виде JSON
+        json::Document ProcessRequests(std::function<detail::BusAnswer(const std::string&, int)> bus_proc,
+                                       std::function<detail::StopAnswer(const std::string&, int)> stop_proc,
+                                       std::function<detail::MapAnswer(int)> map_proc);
 
     private:
         std::deque<detail::StopDistancesQuery> stops_query_;

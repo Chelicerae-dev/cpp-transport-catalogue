@@ -119,7 +119,7 @@ namespace transport_catalogue::render {
         MapRenderer() = delete;
         MapRenderer(const RenderSettings& render_settings);
         void SetCoordinates(const std::vector<detail::BusCoordinates>& buses, const std::vector<detail::Stop*>& stops);
-        void Print(std::ostream& os);
+        std::string Print();
 
     private:
         RenderSettings render_settings_;

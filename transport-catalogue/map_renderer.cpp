@@ -92,9 +92,11 @@ namespace transport_catalogue ::render {
         }
     }
 
-    void MapRenderer::Print(std::ostream& os) {
+    std::string MapRenderer::Print() {
         Render();
-        canvas_.Render(os);
+        std::stringstream strm;
+        canvas_.Render(strm);
+        return strm.str();
     }
 
     svg::Polyline MapRenderer::BusPoly(const std::vector<svg::Point>& coords, const svg::Color& color) {

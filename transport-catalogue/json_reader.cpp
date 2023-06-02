@@ -1,7 +1,7 @@
 #include "json_reader.h"
 
 namespace transport_catalogue::input {
-    JsonReader::JsonReader(json::Document input, backend::TransportCatalogue& transport_catalogue)
+    JsonReader::JsonReader(backend::TransportCatalogue& transport_catalogue, json::Document& input)
         : catalogue_(&transport_catalogue) {
         json::Dict input_data = input.GetRoot().AsMap();
         json::Array input_requests = input_data.at("base_requests").AsArray();
@@ -38,48 +38,50 @@ namespace transport_catalogue::input {
         if(input_data.count("render_settings") != 0) ParseRenderSettings(input_data.at("render_settings").AsMap());
     }
 
-    json::Dict JsonReader::GetBusQuery(const std::string& name, int id) {
-        json::Dict result;
-        result["request_id"] = json::Node(id);
-        detail::Bus* bus = catalogue_->GetBus(name);
-        if(bus == nullptr) {
-            using namespace std::literals;
-            result["error_message"] = json::Node("not found"s);
-        } else {
-            detail::BusInfo bus_info = catalogue_->GetBusInfo(bus);
-            result["curvature"] = json::Node(bus_info.curvature);
-            result["route_length"] = json::Node(bus_info.length);
-            result["stop_count"] = json::Node(bus_info.stop_count);
-            result["unique_stop_count"] = json::Node(bus_info.unique_stop_count);
-        }
-        return result;
-    }
+    json::Document JsonReader::ProcessRequests(std::function<detail::BusAnswer(const std::string&, int)> bus_proc,
+                                                  std::function<detail::StopAnswer(const std::string&, int)> stop_proc,
+                                                  std::function<detail::MapAnswer(int)> map_proc) {
+        json::Array output;
+        for(const auto& request : requests_query_) {
+            if(request.type == "Bus") {
+                detail::BusAnswer bus = bus_proc(request.name.value(), request.id);
+                json::Dict result;
+                result["request_id"] = json::Node(bus.id);
+                if(bus.exists) {
+                    result["name"] = json::Node(request.name.value());
+                    result["curvature"] = json::Node(bus.bus_info->curvature);
+                    result["route_length"] = json::Node(bus.bus_info->length);
+                    result["stop_count"] = json::Node(bus.bus_info->stop_count);
+                    result["unique_stop_count"] = json::Node(bus.bus_info->unique_stop_count);
+                } else {
+                    result["error_message"] = json::Node(bus.error_message);
+                }
+                output.push_back(result);
+            } else if(request.type == "Stop") {
+                detail::StopAnswer stop = stop_proc(request.name.value(), request.id);
+                json::Dict result;
+                result["request_id"] = json::Node(stop.id);
+                if(stop.exists) {
+                    json::Array buses;
+                    for(const std::string& bus : stop.stop_info->buses) {
+                        buses.push_back(json::Node(bus));
+                    }
+                    result["buses"] = std::move(buses);
 
-    json::Dict JsonReader::GetStopQuery(const std::string& name, int id) {
-        json::Dict result;
-        result["request_id"] = json::Node(id);
-        detail::Stop* stop = catalogue_->GetStop(name);
-        if(stop == nullptr) {
-            using namespace std::literals;
-            result["error_message"] = json::Node("not found"s);
-        } else {
-            detail::StopInfo stop_info = catalogue_->GetStopInfo(stop);
-            json::Array buses;
-            for(const std::string& bus : stop_info.buses) {
-                buses.push_back(json::Node(bus));
+                } else {
+                    using namespace std::literals;
+                    result["error_message"] = json::Node("not found"s);
+                }
+                output.push_back(result);
+            } else if(request.type == "Map") {
+                json::Dict result;
+                detail::MapAnswer map = map_proc(request.id);
+                result["request_id"] = json::Node(map.id);
+                result["map"] = json::Node(map.map);
+                output.push_back(result);
             }
-            result["buses"] = std::move(buses);
         }
-        return result;
-    }
-
-    json::Dict JsonReader::GetMap(int id, render::MapRenderer& renderer) {
-        json::Dict result;
-        result["request_id"] = json::Node(id);
-        std::stringstream strm;
-        renderer.Print(strm);
-        result["map"] = strm.str();
-        return result;
+        return json::Document(output);
     }
 
     void JsonReader::ParseStop(json::Dict* node) {

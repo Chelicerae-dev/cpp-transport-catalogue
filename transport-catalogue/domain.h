@@ -71,6 +71,25 @@ namespace transport_catalogue {
             std::vector<geo::Coordinates> coords;
         };
 
+        struct BusAnswer {
+            int id;
+            std::optional<BusInfo> bus_info;
+            bool exists = false;
+            std::string error_message = "not found";
+        };
+
+        struct StopAnswer {
+            int id;
+            std::optional<StopInfo> stop_info;
+            bool exists = false;
+            std::string error_message = "not found";
+        };
+
+        struct MapAnswer {
+            int id;
+            std::string map;
+        };
+
 
     }
 
