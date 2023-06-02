@@ -116,7 +116,7 @@ namespace transport_catalogue::render {
 
     class MapRenderer {
     public:
-        MapRenderer() = delete;
+        MapRenderer() = default;
         MapRenderer(const RenderSettings& render_settings);
         void SetCoordinates(const std::vector<detail::BusCoordinates>& buses, const std::vector<detail::Stop*>& stops);
         std::string Print();

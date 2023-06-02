@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <string>
-#include <functional>
 
 #include "json.h"
 #include "domain.h"
