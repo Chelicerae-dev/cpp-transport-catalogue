@@ -3,12 +3,12 @@
 namespace transport_catalogue::input {
     JsonReader::JsonReader(backend::TransportCatalogue& transport_catalogue, json::Document& input)
         : catalogue_(&transport_catalogue) {
-        json::Dict input_data = input.GetRoot().AsMap();
+        json::Dict input_data = input.GetRoot().AsDict(); //В заготовке json.h к предыдущим урокам был AsDict, штош, оставлю его
         json::Array input_requests = input_data.at("base_requests").AsArray();
         json::Array output_requests;
         if(input_data.count("stat_requests") != 0) output_requests = input_data.at("stat_requests").AsArray();
         std::for_each(input_requests.begin(), input_requests.end(), [this](const json::Node& node){
-            json::Dict query = node.AsMap();
+            json::Dict query = node.AsDict();
             if(query.at("type").AsString() == "Stop") {
                 ParseStop(&query);
             } else {
@@ -30,12 +30,12 @@ namespace transport_catalogue::input {
         //Обрабатываем запросы на вывод
         if(output_requests.size() != 0) {
             for(const json::Node& node : output_requests) {
-                ParseRequest(node.AsMap());
+                ParseRequest(node.AsDict());
             }
         }
 
         //Сохраняем настройки рендера
-        if(input_data.count("render_settings") != 0) ParseRenderSettings(input_data.at("render_settings").AsMap());
+        if(input_data.count("render_settings") != 0) ParseRenderSettings(input_data.at("render_settings").AsDict());
     }
 
     json::Document JsonReader::ProcessRequests(std::function<detail::BusAnswer(const std::string&, int)> bus_proc,
@@ -45,40 +45,46 @@ namespace transport_catalogue::input {
         for(const auto& request : requests_query_) {
             if(request.type == "Bus") {
                 detail::BusAnswer bus = bus_proc(request.name.value(), request.id);
-                json::Dict result;
-                result["request_id"] = json::Node(bus.id);
+                json::Builder result{};
+                result.StartDict();
+                result.Key("request_id").Value(bus.id);
                 if(bus.exists) {
-                    result["name"] = json::Node(request.name.value());
-                    result["curvature"] = json::Node(bus.bus_info->curvature);
-                    result["route_length"] = json::Node(bus.bus_info->length);
-                    result["stop_count"] = json::Node(bus.bus_info->stop_count);
-                    result["unique_stop_count"] = json::Node(bus.bus_info->unique_stop_count);
+//                    result.Key("name").Value(request.name.value()); //С какого-то перепугу из формата пропала эта строка, в 11 спринте она требовалась, в 12 из-за нее не проходят тесты
+                    result.Key("curvature").Value(bus.bus_info->curvature);
+                    result.Key("route_length").Value(bus.bus_info->length);
+                    result.Key("stop_count").Value(bus.bus_info->stop_count);
+                    result.Key("unique_stop_count").Value(bus.bus_info->unique_stop_count);
                 } else {
-                    result["error_message"] = json::Node(bus.error_message);
+                    result.Key("error_message").Value(bus.error_message);
                 }
-                output.push_back(result);
+                result.EndDict();
+                output.push_back(result.Build());
             } else if(request.type == "Stop") {
                 detail::StopAnswer stop = stop_proc(request.name.value(), request.id);
-                json::Dict result;
-                result["request_id"] = json::Node(stop.id);
+                json::Builder result{};
+                result.StartDict();
+                result.Key("request_id").Value(stop.id);
                 if(stop.exists) {
-                    json::Array buses;
+                    result.Key("buses").StartArray();
                     for(const std::string& bus : stop.stop_info->buses) {
-                        buses.push_back(json::Node(bus));
+                        result.Value(bus);
                     }
-                    result["buses"] = std::move(buses);
+                    result.EndArray();
 
                 } else {
                     using namespace std::literals;
-                    result["error_message"] = json::Node("not found"s);
+                    result.Key("error_message").Value("not found"s);
                 }
-                output.push_back(result);
+                result.EndDict();
+                output.push_back(result.Build());
             } else if(request.type == "Map") {
-                json::Dict result;
+                json::Builder result{};
+                result.StartDict();
                 detail::MapAnswer map = map_proc(request.id);
-                result["request_id"] = json::Node(map.id);
-                result["map"] = json::Node(map.map);
-                output.push_back(result);
+                result.Key("request_id").Value(map.id);
+                result.Key("map").Value(map.map);
+                result.EndDict();
+                output.push_back(result.Build());
             }
         }
         return json::Document(output);
@@ -91,7 +97,7 @@ namespace transport_catalogue::input {
         double latitude = node->at("latitude").AsDouble();
         //сначала парсим расстояния если они есть
         if(node->count("road_distances") != 0) {
-            json::Dict distances = node->at("road_distances").AsMap();
+            json::Dict distances = node->at("road_distances").AsDict();
             ParseDistances(name, &distances);
         }
         //создаём остановку
