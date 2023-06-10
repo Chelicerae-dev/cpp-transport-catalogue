@@ -2,7 +2,7 @@
 
 namespace json {
 
-    BaseContext Builder::Value(Node::Value value) {
+    Builder::BaseContext Builder::Value(Node::Value value) {
         if(!init_) {
             root_ = Node(std::move(value));
             init_ = true;
@@ -23,7 +23,7 @@ namespace json {
         return BaseContext(this);
     }
 
-    ArrayValueContext Builder::StartArray() {
+    Builder::ArrayValueContext Builder::StartArray() {
         if(!init_) {
             root_ = Node(Array());
             nodes_stack_.push_back(&root_);
@@ -57,7 +57,7 @@ namespace json {
         return *this;
     }
 
-    DictItemContext Builder::StartDict() {
+    Builder::DictItemContext Builder::StartDict() {
         if(!init_) {
             root_ = Node(Dict());
             nodes_stack_.push_back(&root_);
@@ -80,7 +80,7 @@ namespace json {
         }
         return DictItemContext(this);
     }
-    DictValueContext Builder::Key(std::string key) {
+    Builder::DictValueContext Builder::Key(std::string key) {
         if(nodes_stack_.size() != 0 && std::holds_alternative<Dict>(nodes_stack_.back()->GetValue())) {
             if(key_.has_value()) {
                 throw std::logic_error("Key already set");
@@ -112,38 +112,38 @@ namespace json {
         throw std::logic_error("Building unfinished node");
     }
 
-    BaseContext BaseContext::Value(Node::Value value) {
+    Builder::BaseContext Builder::BaseContext::Value(Node::Value value) {
         return builder_->Value(std::move(value));
     }
 
-    ArrayValueContext BaseContext::StartArray() {
+    Builder::ArrayValueContext Builder::BaseContext::StartArray() {
         return builder_->StartArray();
     }
 
-    Builder& BaseContext::EndArray() {
+    Builder& Builder::BaseContext::EndArray() {
         return builder_->EndArray();
     }
 
-    DictItemContext BaseContext::StartDict() {
+    Builder::DictItemContext Builder::BaseContext::StartDict() {
         return builder_->StartDict();
     }
-    DictValueContext BaseContext::Key(std::string key) {
+    Builder::DictValueContext Builder::BaseContext::Key(std::string key) {
         return builder_->Key(key);
     }
-    Builder& BaseContext::EndDict() {
+    Builder& Builder::BaseContext::EndDict() {
         return builder_->EndDict();
     }
 
-    Node BaseContext::Build() {
+    Node Builder::BaseContext::Build() {
         return builder_->Build();
     }
 
-    DictItemContext DictValueContext::Value(Node::Value value) {
+    Builder::DictItemContext Builder::DictValueContext::Value(Node::Value value) {
         auto temp = builder_->Value(value);
         return static_cast<DictItemContext&>(temp);
     }
 
-    ArrayValueContext ArrayValueContext::Value(Node::Value value) {
+    Builder::ArrayValueContext Builder::ArrayValueContext::Value(Node::Value value) {
         auto temp = builder_->Value(value);
         return static_cast<ArrayValueContext&>(temp);
     }
