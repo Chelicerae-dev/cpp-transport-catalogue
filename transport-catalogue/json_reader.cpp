@@ -36,11 +36,17 @@ namespace transport_catalogue::input {
 
         //Сохраняем настройки рендера
         if(input_data.count("render_settings") != 0) ParseRenderSettings(input_data.at("render_settings").AsDict());
+
+        //устанавливаем настройки роутера в transport_catalogue
+        if(input_data.count("routing_settings") != 0) {
+            transport_catalogue.SetRoutingSettings(input_data.at("routing_settings").AsDict().at("bus_wait_time").AsInt(), input_data.at("routing_settings").AsDict().at("bus_velocity").AsDouble());
+        }
     }
 
     json::Document JsonReader::ProcessRequests(std::function<detail::BusAnswer(const std::string&, int)> bus_proc,
                                                   std::function<detail::StopAnswer(const std::string&, int)> stop_proc,
-                                                  std::function<detail::MapAnswer(int)> map_proc) {
+                                                  std::function<detail::MapAnswer(int)> map_proc,
+                                                  std::function<detail::RoutingAnswer(const std::string&, const std::string&, int)> routing_proc) {
         json::Array output;
         for(const auto& request : requests_query_) {
             if(request.type == "Bus") {
@@ -49,7 +55,6 @@ namespace transport_catalogue::input {
                 result.StartDict();
                 result.Key("request_id").Value(bus.id);
                 if(bus.exists) {
-//                    result.Key("name").Value(request.name.value()); //С какого-то перепугу из формата пропала эта строка, в 11 спринте она требовалась, в 12 из-за нее не проходят тесты
                     result.Key("curvature").Value(bus.bus_info->curvature);
                     result.Key("route_length").Value(bus.bus_info->length);
                     result.Key("stop_count").Value(bus.bus_info->stop_count);
@@ -83,6 +88,35 @@ namespace transport_catalogue::input {
                 detail::MapAnswer map = map_proc(request.id);
                 result.Key("request_id").Value(map.id);
                 result.Key("map").Value(map.map);
+                result.EndDict();
+                output.push_back(result.Build());
+            } else if(request.type == "Route") {
+                //готовим вывод элемента по заданному шаблону, не забыть убрать комментарии и поставить функцию, которую ещё предстоит написать
+                json::Builder result{};
+                result.StartDict();
+                //////
+                detail::RoutingAnswer route = routing_proc(request.from.value(), request.to.value(), request.id);
+                result.Key("request_id").Value(route.id);
+                if(route.exists) {
+                    result.Key("total_time").Value(route.total_time.value());
+                    result.Key("items").StartArray();
+                    for(const auto& item : route.items.value()) {
+                        result.StartDict();
+                        result.Key("type").Value(item.type);
+                        if(item.type == "Wait") {
+                            result.Key("stop_name").Value(item.name.value());
+                        } else {
+                            result.Key("bus").Value(item.name.value());
+                            result.Key("span_count").Value(item.span_count.value());
+                        }
+                        result.Key("time").Value(item.time.value());
+                        result.EndDict();
+                    }
+                    result.EndArray();
+                } else {
+                    using namespace std::literals;
+                    result.Key("error_message").Value("not found"s);
+                }
                 result.EndDict();
                 output.push_back(result.Build());
             }
@@ -128,6 +162,8 @@ namespace transport_catalogue::input {
     void JsonReader::ParseRequest(const json::Dict& node) {
         if(node.at("type").AsString() == "Map") {
             requests_query_.push_back({node.at("id").AsInt(), node.at("type").AsString()});
+        } else if(node.at("type").AsString() == "Route") {
+            requests_query_.push_back({node.at("id").AsInt(), node.at("type").AsString(), node.at("from").AsString(), node.at("to").AsString()});
         } else {
             requests_query_.push_back({node.at("id").AsInt(), node.at("type").AsString(), node.at("name").AsString()});
         }

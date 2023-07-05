@@ -133,4 +133,90 @@
             return result;
         }
 
+        //сеттер для routing_settings_
+        void TransportCatalogue::SetRoutingSettings(int wait_time, double speed) {
+            routing_settings_.bus_wait_time = wait_time;
+            //скорость в кмч поступает, нам же нужны метры в минуту
+            routing_settings_.bus_velocity = speed * 1000 / 60;
+        }
+
+        //private методы-хелперы для построения RouteGraphData
+        void TransportCatalogue::GetVertexIds() {
+            for(const auto [name, stop] : stopname_to_stop_) {
+                //добавляем в поле класса для передачи в класс, который будет искать кратчайший путь
+                stopname_to_vertices_[name] = {stop,  vertice_counter_, vertice_counter_ + 1};
+                vertice_counter_ += 2;
+            }
+
+        }
+
+        std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetBusEdges(const detail::Bus* bus) {
+            std::vector<graph::Edge<detail::Weight>> result;
+            for(int i = 0; i < bus->stops.size(); ++i) {
+                //вводим временные меременные чтобы не писать 3-строчные аргументы
+                auto name = bus->stops[i]->name;
+                auto i_value = stopname_to_vertices_.at(name);
+                result.push_back({i_value.wait, i_value.bus, {static_cast<double>(routing_settings_.bus_wait_time), true, 0, i_value.stop->name}});
+                ++edge_counter_;
+                int distance = 0;
+                for(int j = i + 1; j < bus->stops.size(); ++j) {
+                    auto j_value = stopname_to_vertices_.at(bus->stops[j]->name);
+                    auto prev_to_j_value = stopname_to_vertices_.at(bus->stops[j - 1]->name);
+                    if(distances_.at(prev_to_j_value.stop).count(prev_to_j_value.stop) != 0) {
+                        distance += distances_.at(prev_to_j_value.stop).at(prev_to_j_value.stop);
+                    }
+                    distance += distances_.at(prev_to_j_value.stop).at(j_value.stop);
+                    result.push_back({i_value.bus, j_value.wait, {distance / routing_settings_.bus_velocity, false, j - i, bus->name}});
+                    ++edge_counter_;
+                }
+            }
+            if(!bus->is_looped) {
+                for(int i = bus->stops.size() - 1; i > 0; i--) {
+                    int distance = 0;
+                    auto i_value = stopname_to_vertices_.at(bus->stops[i]->name);
+                    for(int j = i - 1; j >= 0; j--) {
+                        auto j_value = stopname_to_vertices_.at(bus->stops[j]->name);
+                        auto next_to_j_value = stopname_to_vertices_.at(bus->stops[j + 1]->name);
+                        if(distances_.at(next_to_j_value.stop).count(next_to_j_value.stop) != 0) {
+                            distance += distances_.at(next_to_j_value.stop).at(next_to_j_value.stop);
+                        }
+                        distance += distances_.at(next_to_j_value.stop).at(j_value.stop);
+                        result.push_back({i_value.bus, j_value.wait, {distance / routing_settings_.bus_velocity, false, i - j, bus->name}});
+                        ++edge_counter_;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        detail::RouteGraphData GetBusGraph(detail::Bus* bus);
+
+        //Построение RouteGraphData для всех маршрутов для построения графа
+        std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetGraphData() {
+            if(stopname_to_vertices_.size() == 0) {
+                GetVertexIds();
+            }
+            std::vector<graph::Edge<detail::Weight>> result;
+            for(const auto [name, bus] : busname_to_bus_) {
+                std::vector<graph::Edge<detail::Weight>> edges = GetBusEdges(bus);
+                //перемещаем рёбра в выходной результат{
+                result.insert(result.end(), std::make_move_iterator(edges.begin()), std::make_move_iterator(edges.end()));
+            }
+            return result;
+        }
+
+        graph::VertexId TransportCatalogue::GetStopVertex(std::string_view name) const {
+            if(stopname_to_vertices_.count(name) != 0) {
+                return stopname_to_vertices_.at(name).wait;
+            } else {
+                throw std::out_of_range("No such stop to search route");
+            }
+        }
+
+        size_t TransportCatalogue::GetVertexCount() const {
+            return vertice_counter_;
+        }
+
+
     }

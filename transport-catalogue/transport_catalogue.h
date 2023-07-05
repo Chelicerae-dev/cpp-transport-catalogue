@@ -16,7 +16,7 @@ namespace transport_catalogue {
     namespace backend {
         class TransportCatalogue {
 
-            public:
+            public:                            
                 void AddStop(detail::Stop stop);
                 void AddBus(detail::Bus bus);
 
@@ -35,13 +35,26 @@ namespace transport_catalogue {
                 std::vector<detail::Bus*> GetAllBuses();
                 std::vector<detail::Stop*> GetAllStops();
 
+                void SetRoutingSettings(int wait_time, double speed);
+
+                size_t GetVertexCount() const;
+                std::vector<graph::Edge<detail::Weight>> GetGraphData();
+
+                graph::VertexId GetStopVertex(std::string_view name) const;
+
             private:
                 std::list<detail::Stop> stops_;
                 std::unordered_map<std::string_view, detail::Stop*> stopname_to_stop_;
                 std::list<detail::Bus> buses_;
                 std::unordered_map<std::string_view, detail::Bus*> busname_to_bus_;
                 std::unordered_map<detail::Stop*, std::unordered_map<detail::Stop*, int>> distances_;
+                detail::RoutingSettings routing_settings_;
+                graph::VertexId vertice_counter_ = 0;
+                graph::EdgeId edge_counter_ = 0;
+                std::unordered_map<std::string_view, detail::StopVertices> stopname_to_vertices_;
 
+                void GetVertexIds();
+                std::vector<graph::Edge<detail::Weight>> GetBusEdges(const detail::Bus* bus);
         };
     }
 }

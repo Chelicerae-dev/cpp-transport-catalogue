@@ -20,7 +20,8 @@ namespace transport_catalogue::input {
         //метод для обработки всех запросов из JSON и ответа в виде JSON
         json::Document ProcessRequests(std::function<detail::BusAnswer(const std::string&, int)> bus_proc,
                                        std::function<detail::StopAnswer(const std::string&, int)> stop_proc,
-                                       std::function<detail::MapAnswer(int)> map_proc);
+                                       std::function<detail::MapAnswer(int)> map_proc,
+                                       std::function<detail::RoutingAnswer(const std::string&, const std::string&, int)> routing_proc);
 
     private:
         std::deque<detail::StopDistancesQuery> stops_query_;
