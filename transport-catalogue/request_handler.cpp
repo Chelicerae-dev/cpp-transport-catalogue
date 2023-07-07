@@ -2,8 +2,8 @@
 
 namespace transport_catalogue::output {
 
-    RequestHandler::RequestHandler(backend::TransportCatalogue& tc, const render::RenderSettings& render_settings)
-        : transport_catalogue_(&tc), renderer_(render_settings), router_(routing::RouterInitializer(tc)) {
+    RequestHandler::RequestHandler(backend::TransportCatalogue& tc, const render::RenderSettings& render_settings, const detail::RoutingSettings& routing_settings)
+        : transport_catalogue_(&tc), renderer_(render_settings), router_(routing_settings, tc) {
         renderer_.SetCoordinates(GetCoordinates(), GetStops());
     }
 
@@ -16,24 +16,11 @@ namespace transport_catalogue::output {
         result.id = id;
         auto ver_from = transport_catalogue_->GetStopVertex(from);
         auto ver_to = transport_catalogue_->GetStopVertex(to);
-        std::optional<graph::Router<detail::Weight>::RouteInfo> route = router_.BuildRoute(ver_from, ver_to);
-        if(route.has_value()) {
+        detail::Route route = router_.BuildRoute(ver_from, ver_to);
+        if(route.exists) {
             result.exists = true;
-            result.total_time = route.value().weight.value;
-            result.items = std::vector<detail::RoutingAnswerItem>();
-            for(graph::EdgeId edge_id : route.value().edges) {
-                graph::Edge<detail::Weight> edge = router_.GetEdge(edge_id);
-                detail::RoutingAnswerItem item;
-                if(edge.weight.is_wait) {
-                    item.type = "Wait";
-                } else {
-                    item.type = "Bus";
-                    item.span_count = edge.weight.span;
-                }
-                item.name = edge.weight.name;
-                item.time = edge.weight.value;
-                result.items.value().push_back(item);
-            }
+            result.total_time = route.time;
+            result.items = route.items;
         }
         return result;
     }

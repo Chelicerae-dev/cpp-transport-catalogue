@@ -16,6 +16,7 @@ namespace transport_catalogue::input {
         JsonReader(backend::TransportCatalogue& transport_catalogue, json::Document& input);
         bool GetQuery(detail::OutputQuery& output);
         const render::RenderSettings& GetRenderSettings() const;
+        const detail::RoutingSettings& GetRoutingSettings() const;
 
         //метод для обработки всех запросов из JSON и ответа в виде JSON
         json::Document ProcessRequests(std::function<detail::BusAnswer(const std::string&, int)> bus_proc,
@@ -28,6 +29,7 @@ namespace transport_catalogue::input {
         std::deque<detail::BusCreationQuery> buses_query_;
         std::deque<detail::OutputQuery> requests_query_;
         render::RenderSettings render_settings_;
+        detail::RoutingSettings routing_settings_;
         backend::TransportCatalogue* catalogue_;
 
 

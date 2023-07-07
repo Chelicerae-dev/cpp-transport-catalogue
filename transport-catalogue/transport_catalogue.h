@@ -35,10 +35,8 @@ namespace transport_catalogue {
                 std::vector<detail::Bus*> GetAllBuses();
                 std::vector<detail::Stop*> GetAllStops();
 
-                void SetRoutingSettings(int wait_time, double speed);
-
                 size_t GetVertexCount() const;
-                std::vector<graph::Edge<detail::Weight>> GetGraphData();
+                std::vector<graph::Edge<detail::Weight>> GetGraphData(const detail::RoutingSettings& settings);
 
                 graph::VertexId GetStopVertex(std::string_view name) const;
 
@@ -48,13 +46,12 @@ namespace transport_catalogue {
                 std::list<detail::Bus> buses_;
                 std::unordered_map<std::string_view, detail::Bus*> busname_to_bus_;
                 std::unordered_map<detail::Stop*, std::unordered_map<detail::Stop*, int>> distances_;
-                detail::RoutingSettings routing_settings_;
                 graph::VertexId vertice_counter_ = 0;
                 graph::EdgeId edge_counter_ = 0;
                 std::unordered_map<std::string_view, detail::StopVertices> stopname_to_vertices_;
 
                 void GetVertexIds();
-                std::vector<graph::Edge<detail::Weight>> GetBusEdges(const detail::Bus* bus);
+                std::vector<graph::Edge<detail::Weight>> GetBusEdges(const detail::Bus* bus, const detail::RoutingSettings& settings);
         };
     }
 }

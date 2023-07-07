@@ -14,7 +14,7 @@ namespace transport_catalogue {
     namespace output {
         class RequestHandler {
         public:
-            RequestHandler(backend::TransportCatalogue& tc, const render::RenderSettings& render_settings);
+            RequestHandler(backend::TransportCatalogue& tc, const render::RenderSettings& render_settings, const detail::RoutingSettings& routing_settings);
 
             //методы для обработки запроса
             detail::MapAnswer GetMap(int id);

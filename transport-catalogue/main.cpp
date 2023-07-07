@@ -7,7 +7,7 @@ int main() {
     json::Document input = json::Load(std::cin);
     transport_catalogue::backend::TransportCatalogue transport_catalogue;
     transport_catalogue::input::JsonReader requests(transport_catalogue, input);
-    transport_catalogue::output::RequestHandler request_handler(transport_catalogue, requests.GetRenderSettings());
+    transport_catalogue::output::RequestHandler request_handler(transport_catalogue, requests.GetRenderSettings(), requests.GetRoutingSettings());
     //Запрашиваем лямбдами потому что за 2 дня я так и не понял как побороть различные ошибки при попытке передать функции в конкретом объекте
     //Результат всё равно одинаковый
     json::Document result = requests.ProcessRequests(

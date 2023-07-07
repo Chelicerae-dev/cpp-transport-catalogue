@@ -96,9 +96,13 @@ namespace transport_catalogue {
             std::string map;
         };
 
-        struct RoutingAnswerItem {
-            std::string type;
-            std::optional<std::string> name;
+        struct RouteItem {
+            enum RouteItemType {
+                WAIT, BUS
+            };
+
+            RouteItemType type;
+            std::string name;
             std::optional<int> span_count;
             std::optional<double> time;
         };
@@ -106,7 +110,7 @@ namespace transport_catalogue {
         struct RoutingAnswer {
             int id;
             std::optional<double> total_time;
-            std::optional<std::vector<RoutingAnswerItem>> items;
+            std::optional<std::vector<RouteItem>> items;
             bool exists = false;
         };
 
@@ -136,6 +140,12 @@ namespace transport_catalogue {
             std::string_view bus_name;
             std::vector<StopVertices> stops_to_vertex;
             std::vector<graph::Edge<Weight>> edges;
+        };
+
+        struct Route {
+            bool exists = false;
+            double time = 0.;
+            std::optional<std::vector<RouteItem>> items;
         };
     }
 }

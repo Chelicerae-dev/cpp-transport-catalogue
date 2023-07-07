@@ -39,7 +39,7 @@ namespace transport_catalogue::input {
 
         //устанавливаем настройки роутера в transport_catalogue
         if(input_data.count("routing_settings") != 0) {
-            transport_catalogue.SetRoutingSettings(input_data.at("routing_settings").AsDict().at("bus_wait_time").AsInt(), input_data.at("routing_settings").AsDict().at("bus_velocity").AsDouble());
+            routing_settings_ = {static_cast<uint16_t>(input_data.at("routing_settings").AsDict().at("bus_wait_time").AsInt()), input_data.at("routing_settings").AsDict().at("bus_velocity").AsDouble()};
         }
     }
 
@@ -102,11 +102,13 @@ namespace transport_catalogue::input {
                     result.Key("items").StartArray();
                     for(const auto& item : route.items.value()) {
                         result.StartDict();
-                        result.Key("type").Value(item.type);
-                        if(item.type == "Wait") {
-                            result.Key("stop_name").Value(item.name.value());
+                        result.Key("type");
+                        if(item.type == detail::RouteItem::RouteItemType::WAIT) {
+                            result.Value("Wait");
+                            result.Key("stop_name").Value(std::string(item.name));
                         } else {
-                            result.Key("bus").Value(item.name.value());
+                            result.Value("Bus");
+                            result.Key("bus").Value(std::string(item.name));
                             result.Key("span_count").Value(item.span_count.value());
                         }
                         result.Key("time").Value(item.time.value());
@@ -215,6 +217,10 @@ namespace transport_catalogue::input {
 
     const render::RenderSettings& JsonReader::GetRenderSettings() const {
         return render_settings_;
+    }
+
+    const detail::RoutingSettings& JsonReader::GetRoutingSettings() const {
+        return routing_settings_;
     }
 
 }

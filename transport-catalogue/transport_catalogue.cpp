@@ -133,13 +133,6 @@
             return result;
         }
 
-        //сеттер для routing_settings_
-        void TransportCatalogue::SetRoutingSettings(int wait_time, double speed) {
-            routing_settings_.bus_wait_time = wait_time;
-            //скорость в кмч поступает, нам же нужны метры в минуту
-            routing_settings_.bus_velocity = speed * 1000 / 60;
-        }
-
         //private методы-хелперы для построения RouteGraphData
         void TransportCatalogue::GetVertexIds() {
             for(const auto [name, stop] : stopname_to_stop_) {
@@ -150,13 +143,13 @@
 
         }
 
-        std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetBusEdges(const detail::Bus* bus) {
+        std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetBusEdges(const detail::Bus* bus, const detail::RoutingSettings& settings) {
             std::vector<graph::Edge<detail::Weight>> result;
             for(int i = 0; i < bus->stops.size(); ++i) {
                 //вводим временные меременные чтобы не писать 3-строчные аргументы
                 auto name = bus->stops[i]->name;
                 auto i_value = stopname_to_vertices_.at(name);
-                result.push_back({i_value.wait, i_value.bus, {static_cast<double>(routing_settings_.bus_wait_time), true, 0, i_value.stop->name}});
+                result.push_back({i_value.wait, i_value.bus, {static_cast<double>(settings.bus_wait_time), true, 0, i_value.stop->name}});
                 ++edge_counter_;
                 int distance = 0;
                 for(int j = i + 1; j < bus->stops.size(); ++j) {
@@ -166,7 +159,7 @@
                         distance += distances_.at(prev_to_j_value.stop).at(prev_to_j_value.stop);
                     }
                     distance += distances_.at(prev_to_j_value.stop).at(j_value.stop);
-                    result.push_back({i_value.bus, j_value.wait, {distance / routing_settings_.bus_velocity, false, j - i, bus->name}});
+                    result.push_back({i_value.bus, j_value.wait, {distance / settings.bus_velocity, false, j - i, bus->name}});
                     ++edge_counter_;
                 }
             }
@@ -181,7 +174,7 @@
                             distance += distances_.at(next_to_j_value.stop).at(next_to_j_value.stop);
                         }
                         distance += distances_.at(next_to_j_value.stop).at(j_value.stop);
-                        result.push_back({i_value.bus, j_value.wait, {distance / routing_settings_.bus_velocity, false, i - j, bus->name}});
+                        result.push_back({i_value.bus, j_value.wait, {distance / settings.bus_velocity, false, i - j, bus->name}});
                         ++edge_counter_;
                     }
                 }
@@ -190,16 +183,14 @@
             return result;
         }
 
-        detail::RouteGraphData GetBusGraph(detail::Bus* bus);
-
         //Построение RouteGraphData для всех маршрутов для построения графа
-        std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetGraphData() {
+        std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetGraphData(const detail::RoutingSettings& settings) {
             if(stopname_to_vertices_.size() == 0) {
                 GetVertexIds();
             }
             std::vector<graph::Edge<detail::Weight>> result;
             for(const auto [name, bus] : busname_to_bus_) {
-                std::vector<graph::Edge<detail::Weight>> edges = GetBusEdges(bus);
+                std::vector<graph::Edge<detail::Weight>> edges = GetBusEdges(bus, settings);
                 //перемещаем рёбра в выходной результат{
                 result.insert(result.end(), std::make_move_iterator(edges.begin()), std::make_move_iterator(edges.end()));
             }

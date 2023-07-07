@@ -14,15 +14,20 @@ namespace transport_catalogue::routing {
 
     class TransportRouter {
     public:
-        explicit TransportRouter(const graph::DirectedWeightedGraph<detail::Weight>& graph);
+        explicit TransportRouter(const detail::RoutingSettings& settings, backend::TransportCatalogue& tranpsort_catalogue);
 
-        std::optional<graph::Router<detail::Weight>::RouteInfo> BuildRoute(graph::VertexId from, graph::VertexId to) const;
-        const graph::Edge<detail::Weight>& GetEdge(graph::EdgeId edge_id) const;
+        detail::Route BuildRoute(graph::VertexId from, graph::VertexId to);
+
     private:
-        graph::DirectedWeightedGraph<detail::Weight> graph_;
+        detail::RoutingSettings settings_;
+//        graph::DirectedWeightedGraph<detail::Weight> graph_;
         graph::Router<detail::Weight> router_;
+
+//        const graph::Edge<detail::Weight> GetEdge(graph::EdgeId edge_id) const;
+        detail::RoutingSettings SetRoutingSettings(const detail::RoutingSettings& settings);
+        const graph::DirectedWeightedGraph<detail::Weight> RouterGraphInitializer(backend::TransportCatalogue& transport_catalogue, const detail::RoutingSettings& settings);
     };
 
-    TransportRouter RouterInitializer(backend::TransportCatalogue& transport_catalogue);
+
 
 }
