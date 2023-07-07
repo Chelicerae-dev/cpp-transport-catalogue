@@ -20,10 +20,8 @@ namespace transport_catalogue::routing {
 
     private:
         detail::RoutingSettings settings_;
-//        graph::DirectedWeightedGraph<detail::Weight> graph_;
         graph::Router<detail::Weight> router_;
 
-//        const graph::Edge<detail::Weight> GetEdge(graph::EdgeId edge_id) const;
         detail::RoutingSettings SetRoutingSettings(const detail::RoutingSettings& settings);
         const graph::DirectedWeightedGraph<detail::Weight> RouterGraphInitializer(backend::TransportCatalogue& transport_catalogue, const detail::RoutingSettings& settings);
     };
