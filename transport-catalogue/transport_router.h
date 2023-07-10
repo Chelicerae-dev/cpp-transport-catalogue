@@ -8,6 +8,7 @@
 #include <string_view>
 #include <optional>
 #include <vector>
+#include <memory>
 
 namespace transport_catalogue::routing {
 
@@ -20,10 +21,10 @@ namespace transport_catalogue::routing {
 
     private:
         detail::RoutingSettings settings_;
-        graph::Router<detail::Weight> router_;
+        std::unique_ptr<graph::Router<detail::Weight>> router_ = nullptr;
 
         detail::RoutingSettings SetRoutingSettings(const detail::RoutingSettings& settings);
-        const graph::DirectedWeightedGraph<detail::Weight> RouterGraphInitializer(backend::TransportCatalogue& transport_catalogue, const detail::RoutingSettings& settings);
+        double ConvertSpeed(double bus_velocity) const;
     };
 
 
