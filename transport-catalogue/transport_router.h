@@ -16,9 +16,11 @@ namespace transport_catalogue::routing {
     class TransportRouter {
     public:
         explicit TransportRouter(const detail::RoutingSettings& settings, backend::TransportCatalogue& tranpsort_catalogue);
+        explicit TransportRouter(const detail::RoutingSettings& settings, detail::RouterSerialization&& router_data);
 
         detail::Route BuildRoute(graph::VertexId from, graph::VertexId to);
 
+        std::pair<detail::RoutingSettings, graph::Router<detail::Weight>*> GetData();
     private:
         detail::RoutingSettings settings_;
         std::unique_ptr<graph::Router<detail::Weight>> router_ = nullptr;

@@ -12,6 +12,14 @@ namespace transport_catalogue::routing {
         router_ = std::make_unique<graph::Router<detail::Weight>>(route_graph);
     }
 
+    TransportRouter::TransportRouter(const detail::RoutingSettings& settings, detail::RouterSerialization&& router_data)
+        : settings_(settings)
+    {
+        router_ = std::make_unique<graph::Router<detail::Weight>>(std::move(router_data.graph_edges),
+                                                                   std::move(router_data.incidence_lists),
+                                                                std::move(router_data.routes_internal_data));
+    }
+
     detail::Route TransportRouter::BuildRoute(graph::VertexId from, graph::VertexId to) {
         if(router_) {
             std::optional<graph::Router<detail::Weight>::RouteInfo> raw_route = router_->BuildRoute(from, to);
@@ -50,6 +58,10 @@ namespace transport_catalogue::routing {
 
     double TransportRouter::ConvertSpeed(double bus_velocity) const {
         return bus_velocity * 1000 / 60;
+    }
+
+    std::pair<detail::RoutingSettings, graph::Router<detail::Weight>*> TransportRouter::GetData() {
+        return {settings_, router_.get()};
     }
 } //namespace routing
 

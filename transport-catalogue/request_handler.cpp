@@ -7,6 +7,14 @@ namespace transport_catalogue::output {
         renderer_.SetCoordinates(GetCoordinates(), GetStops());
     }
 
+    RequestHandler::RequestHandler(backend::TransportCatalogue& tc,
+                                   const render::RenderSettings& render_settings,
+                                   const detail::RoutingSettings& routing_settings,
+                                   detail::RouterSerialization&& router_data)
+        : transport_catalogue_(&tc), renderer_(render_settings), router_(routing_settings, std::move(router_data)) {
+        renderer_.SetCoordinates(GetCoordinates(), GetStops());
+    }
+
     detail::MapAnswer RequestHandler::GetMap(int id) {
         return {id, renderer_.Print()};
     }

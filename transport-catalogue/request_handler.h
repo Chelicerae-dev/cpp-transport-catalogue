@@ -15,6 +15,10 @@ namespace transport_catalogue {
         class RequestHandler {
         public:
             RequestHandler(backend::TransportCatalogue& tc, const render::RenderSettings& render_settings, const detail::RoutingSettings& routing_settings);
+            RequestHandler(backend::TransportCatalogue& tc,
+                                               const render::RenderSettings& render_settings,
+                                               const detail::RoutingSettings& routing_settings,
+                                               detail::RouterSerialization&& router_data);
 
             //методы для обработки запроса
             detail::MapAnswer GetMap(int id);

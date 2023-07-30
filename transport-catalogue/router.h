@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graph.h"
+//#include "domain.h"
 
 #include <algorithm>
 #include <cassert>
@@ -20,7 +21,16 @@ private:
     using Graph = DirectedWeightedGraph<Weight>;
 
 public:
+    struct RouteInternalData {
+        Weight weight;
+        std::optional<EdgeId> prev_edge;
+    };
+    using RoutesInternalData = std::vector<std::vector<std::optional<RouteInternalData>>>;
+
     explicit Router(const Graph& graph);
+    explicit Router(std::vector<graph::Edge<Weight>>&& edges,
+                    std::vector<std::vector<EdgeId>>&& incidence_lists,
+                    RoutesInternalData&& routes_data);
 
     struct RouteInfo {
         Weight weight;
@@ -29,14 +39,16 @@ public:
 
     Edge<Weight> GetEdge(EdgeId edge_id) const;
     std::optional<RouteInfo> BuildRoute(VertexId from, VertexId to) const;
-private:
-    struct RouteInternalData {
-        Weight weight;
-        std::optional<EdgeId> prev_edge;
-    };
-    using RoutesInternalData = std::vector<std::vector<std::optional<RouteInternalData>>>;
 
-    //логично вынести реализацию, но это "сторонняя" библиотека по условиям задачи, поэтому я решил её не трогать
+
+
+    //ну надо же мне как-то сохранить готовый и посчитанный граф
+    std::pair<Graph, RoutesInternalData> GetRouterData() {
+        return {graph_, routes_internal_data_};
+    }
+private:
+
+
     void InitializeRoutesInternalData(const Graph& graph);
 
     void RelaxRoute(VertexId vertex_from, VertexId vertex_to, const RouteInternalData& route_from,
@@ -79,6 +91,14 @@ Router<Weight>::Router(const Graph& graph)
         RelaxRoutesInternalDataThroughVertex(vertex_count, vertex_through);
     }
 }
+
+template <typename Weight>
+Router<Weight>::Router(std::vector<graph::Edge<Weight>>&& edges,
+                       std::vector<std::vector<EdgeId>>&& incidence_lists,
+                       RoutesInternalData&& routes_data)
+    : graph_(std::move(edges), std::move(incidence_lists))
+    , routes_internal_data_(std::move(routes_data))
+{ }
 
 template <typename Weight>
 void Router<Weight>::InitializeRoutesInternalData(const Graph& graph) {

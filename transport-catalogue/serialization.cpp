@@ -2,11 +2,7 @@
 
 namespace transport_catalogue::serialize {
 
-    bool SerializeCatalogue(backend::TransportCatalogue& catalogue,
-                        const render::RenderSettings& render_settings,
-                        const detail::RoutingSettings& routing_settings,
-                        std::ofstream& out)
-    {
+    bool SerializeCatalogue(backend::TransportCatalogue& catalogue, const render::RenderSettings& render_settings, routing::TransportRouter& t_router, std::ofstream& out) {
         std::vector<detail::Stop*> stops = catalogue.GetAllStops(true);
         std::vector<detail::Bus*> buses = catalogue.GetAllBuses();
         std::unordered_map<detail::Stop*, std::unordered_map<detail::Stop*, int>> distances =  catalogue.GetAllDistances();
@@ -25,16 +21,29 @@ namespace transport_catalogue::serialize {
         AddProtoDistances(distances, pc, stop_ids);
         //...остановки
         AddProtoBuses(buses, pc, stop_ids);
+
+        std::map<std::string_view, uint32_t> stopname_ids;
+        std::for_each(stop_ids.begin(), stop_ids.end(), [&stopname_ids](const auto& stop) {
+            stopname_ids[stop.first->name] = stop.second;
+        });
+        std::map<std::string_view, uint32_t> bus_ids;
+        for(int i = 0; i < buses.size(); ++i) {
+            bus_ids[buses[i]->name] = i;
+        }
+
         //рендер
         AddRenderSettings(render_settings, pc);
+        AddVertices(catalogue.GetVertices(), pc, stop_ids);
 
-        pc.mutable_routing_settings()->set_bus_velocity(routing_settings.bus_velocity);
-        pc.mutable_routing_settings()->set_bus_wait_time(routing_settings.bus_wait_time);
+        AddRouter(t_router, pc, stopname_ids, bus_ids);
 
         return pc.SerializeToOstream(&out);
     }
 
-    backend::TransportCatalogue DeserializeCatalogue(std::ifstream& in, render::RenderSettings& rs_out, detail::RoutingSettings& routing_settings) {
+    backend::TransportCatalogue DeserializeCatalogue(std::ifstream& in,
+                                                     render::RenderSettings& rs_out,
+                                                     detail::RouterSerialization& router_data,
+                                                     detail::RoutingSettings& routing_settings) {
         proto_catalogue::TransportCatalogue  pc;
         backend::TransportCatalogue result;
 
@@ -49,10 +58,17 @@ namespace transport_catalogue::serialize {
         //...остановки
         ParseProtoBuses(pc, result, stop_ids);
 
+        result.SetVertices(ParseVertices(pc, stop_ids));
+
+        std::vector<detail::Bus*> buses = result.GetAllBuses();
+
         rs_out = ParseRenderSettings(pc);
 
-        routing_settings.bus_velocity = pc.routing_settings().bus_velocity();
-        routing_settings.bus_wait_time = pc.routing_settings().bus_wait_time();
+        router_data.routes_internal_data = ParseRoutesInternalData(pc, stop_ids, buses);
+        router_data.graph_edges = ParseGraphEdges(pc, result, stop_ids, buses);
+        router_data.incidence_lists = ParseIncidenceList(pc);
+
+        routing_settings = ParseRoutingSettings(pc);
 
         return result;
     }
@@ -105,6 +121,16 @@ namespace transport_catalogue::serialize {
     void AddRenderSettings(const render::RenderSettings& render_settings,
                            proto_catalogue::TransportCatalogue& pc) {
         *pc.mutable_render_settings() = MakeRenderSettings(render_settings);
+    }
+
+    void AddVertices(const std::unordered_map<detail::Stop*, detail::StopVertices>& vertices_list, proto_catalogue::TransportCatalogue& pc, std::map<detail::Stop*, uint32_t>& stop_ids) {
+        for(auto [stop, vertices] : vertices_list) {
+            proto_catalogue::StopVertex temp;
+            temp.set_id(stop_ids.at(stop));
+            temp.set_wait(vertices.wait);
+            temp.set_bus(vertices.bus);
+            *pc.add_vertices() = temp;
+        }
     }
 
     proto_map::RenderSettings MakeRenderSettings(const render::RenderSettings& rs) {
@@ -161,7 +187,7 @@ namespace transport_catalogue::serialize {
                          backend::TransportCatalogue& tc, std::map<uint32_t,
                          detail::Stop*>& stop_ids)
     {
-        for(auto stop : pc.stops()) {
+        for(auto& stop : pc.stops()) {
             tc.AddStop({stop.name(), {stop.location().lat(), stop.location().lng()}});
             //записываем ID для дальнейшей работы
             stop_ids[stop.id()] = tc.GetStop(stop.name());
@@ -172,9 +198,9 @@ namespace transport_catalogue::serialize {
                              backend::TransportCatalogue& tc, std::map<uint32_t,
                              detail::Stop*>& stop_ids)
     {
-        for(auto elem : pc.distances()) {
+        for(auto& elem : pc.distances()) {
             std::map<std::string, int> distances;
-            for(auto [id, val] : elem.distances()) {
+            for(auto& [id, val] : elem.distances()) {
                 distances[stop_ids.at(id)->name] = val;
             }
             tc.AddStopDistances(stop_ids.at(elem.stop()), distances);
@@ -185,27 +211,15 @@ namespace transport_catalogue::serialize {
                          backend::TransportCatalogue& tc, std::map<uint32_t,
                          detail::Stop*>& stop_ids)
     {
-//        for(auto bus : pc.buses()) {
-//            detail::BusCreationQuery temp;
-//            temp.name = bus.name();
-//            temp.is_looped = bus.is_looped();
-//            for(auto stop : bus.stops()) {
-//                temp.stops.push_back(stop_ids.at(stop)->name);
-//            }
-//            tc.AddBus(tc.MakeBus(temp));
-//        }
-        for(auto bus : pc.buses()) {
-                    detail::BusCreationQuery temp;
-                    temp.name = bus.name();
-                    temp.is_looped = bus.is_looped();
-//                    for(auto stop : bus.stops()) {
-//                        temp.stops.push_back(stop_ids.at(stop)->name);
-//                    }
-                    for(int i = bus.stops().size() - 1; i >= 0; i--) {
-                        temp.stops.push_back(stop_ids.at(bus.stops()[i])->name);
-                    }
-                    tc.AddBus(tc.MakeBus(temp));
-                }
+        for(auto& bus : pc.buses()) {
+            detail::BusCreationQuery temp;
+            temp.name = bus.name();
+            temp.is_looped = bus.is_looped();
+            for(auto stop : bus.stops()) {
+                temp.stops.push_back(stop_ids.at(stop)->name);
+            }
+            tc.AddBus(tc.MakeBus(temp));
+        }
     }
 
     render::RenderSettings ParseRenderSettings(proto_catalogue::TransportCatalogue& pc) {
@@ -260,4 +274,170 @@ namespace transport_catalogue::serialize {
         }
     }
 
+    std::unordered_map<std::string_view, detail::StopVertices> ParseVertices(proto_catalogue::TransportCatalogue& pc,
+                                                                              std::map<uint32_t, detail::Stop*>& stop_ids) {
+        std::unordered_map<std::string_view, detail::StopVertices> result;
+        for(auto& vertices : pc.vertices()) {
+            result[stop_ids.at(vertices.id())->name] = {stop_ids.at(vertices.id()), vertices.wait(), vertices.bus()};
+        }
+        return result;
+    }
+
+    void AddRouter(routing::TransportRouter& t_router, proto_catalogue::TransportCatalogue& pc,
+                                            const std::map<std::string_view, uint32_t>& stopname_ids,
+                                            const std::map<std::string_view, uint32_t>& bus_ids) {
+        auto t_router_data = t_router.GetData();
+        pc.mutable_router()->mutable_settings()->set_bus_wait_time(t_router_data.first.bus_wait_time);
+        pc.mutable_router()->mutable_settings()->set_bus_velocity(t_router_data.first.bus_velocity);
+
+        //разбираем граф, дай мне сил пережить это
+        auto proto_router = pc.mutable_router();
+        auto router_ptr = t_router_data.second;
+        //сначала граф, он будто бы попроще
+        proto_graph::Graph proto_graph;
+        auto graph = router_ptr->GetRouterData().first;
+        for(auto& edge : graph.GetData().first) {
+            proto_graph::Edge proto_edge;
+            proto_edge.set_from(edge.from);
+            proto_edge.set_to(edge.to);
+            if(edge.weight.is_wait) {
+                *proto_edge.mutable_weight() = MakeProtoWeightStop(edge.weight, stopname_ids);
+            } else {
+                *proto_edge.mutable_weight() = MakeProtoWeightBus(edge.weight, bus_ids);
+            }
+            *proto_graph.add_edges() = proto_edge;
+        }
+        for(auto& i_list : graph.GetData().second) {
+            proto_graph::IncidenceList proto_list;
+            for(auto incidence : i_list) {
+                proto_list.add_values(incidence);
+            }
+            *proto_graph.add_incidence_lists() = proto_list;
+        }
+
+        *proto_router->mutable_router()->mutable_graph() = proto_graph;
+
+        //теперь данные из самого роутера
+        auto internal_router_data = router_ptr->GetRouterData().second;
+        for(auto& opt_vector : internal_router_data) {
+            proto_graph::OptionalVector proto_o_v;
+            for(auto opt_data : opt_vector) {
+                if(opt_data.has_value() && opt_data.value().weight.name != "") {
+                    proto_graph::OptionalData proto_o_d;
+                    proto_graph::RouteInternalData internal_data;
+                    if(opt_data.value().prev_edge.has_value()) {
+                        internal_data.set_edge(opt_data.value().prev_edge.value());
+                    }
+                    if(opt_data.value().weight.is_wait) {
+                        *internal_data.mutable_weight() = MakeProtoWeightStop(opt_data.value().weight, stopname_ids);
+                    } else {
+                        *internal_data.mutable_weight() = MakeProtoWeightBus(opt_data.value().weight, bus_ids);
+                    }
+                    *proto_o_d.mutable_route_internal_data() = internal_data;
+                    *proto_o_v.add_data() = proto_o_d;
+                } else {
+                    proto_o_v.add_data();
+                }
+            }
+            *proto_router->mutable_router()->add_routes_internal_data() = proto_o_v;
+        }
+        //Вроде бы заполнили роутер
+    }
+
+    proto_graph::Weight MakeProtoWeightStop(const detail::Weight& input, const std::map<std::string_view, uint32_t>& stop_ids) {
+        proto_graph::Weight weight;
+        weight.set_value(input.value);
+        weight.set_is_wait(input.is_wait);
+        weight.set_span(input.span);
+        weight.set_id(stop_ids.at(input.name));
+        return weight;
+    }
+
+    proto_graph::Weight MakeProtoWeightBus(const detail::Weight& input, const std::map<std::string_view, uint32_t>& bus_ids) {
+        proto_graph::Weight weight;
+        weight.set_value(input.value);
+        weight.set_is_wait(input.is_wait);
+        weight.set_span(input.span);
+        weight.set_id(bus_ids.at(input.name));
+        return weight;
+    }
+
+    //Парсим элементы графа для сборки transport_router
+    detail::Weight MakeWeight(const proto_graph::Weight& pw,
+                              const std::map<uint32_t, detail::Stop*>& stop_ids,
+                              const std::vector<detail::Bus*>& buses) {
+        detail::Weight result;
+        if(pw.is_wait()) {
+            result.name = stop_ids.at(pw.id())->name;
+        } else {
+            result.name = buses[pw.id()]->name;
+        }
+        result.is_wait = pw.is_wait();
+        result.span = pw.span();
+        result.value = pw.value();
+        return result;
+    }
+
+    std::vector<graph::Edge<detail::Weight>> ParseGraphEdges(proto_catalogue::TransportCatalogue& pc, backend::TransportCatalogue& tc,
+                                                             const std::map<uint32_t, detail::Stop*>& stop_ids,
+                                                             const std::vector<detail::Bus*>& buses) {
+        proto_graph::Graph proto_graph = pc.router().router().graph();
+        std::vector<graph::Edge<detail::Weight>> result;
+
+        for(auto proto_edge : proto_graph.edges()) {
+            graph::Edge<detail::Weight> temp;
+            temp.from = proto_edge.from();
+            temp.to = proto_edge.to();
+            temp.weight = MakeWeight(proto_edge.weight(), stop_ids, buses);
+            result.push_back(temp);
+        }
+        return result;
+    }
+    std::vector<std::vector<size_t>> ParseIncidenceList(proto_catalogue::TransportCatalogue& pc) {
+        std::vector<std::vector<size_t>> result;
+        proto_graph::Graph proto_graph = pc.router().router().graph();
+
+        for(auto incidence_list : proto_graph.incidence_lists()) {
+            std::vector<size_t> temp;
+            for(auto inc : incidence_list.values()) {
+                temp.push_back(inc);
+            }
+            result.push_back(temp);
+        }
+
+        return result;
+    }
+
+    std::vector<std::vector<std::optional<graph::Router<detail::Weight>::RouteInternalData>>> ParseRoutesInternalData(proto_catalogue::TransportCatalogue& pc,
+                                                                                                                      const std::map<uint32_t, detail::Stop*>& stop_ids,
+                                                                                                                      const std::vector<detail::Bus*>& buses) {
+        std::vector<std::vector<std::optional<graph::Router<detail::Weight>::RouteInternalData>>> result;
+        proto_graph::Router router = pc.router().router();
+
+        //внезапно используем типы вместе auto в надежде что это поможет не запутаться
+        for(const proto_graph::OptionalVector& proto_o_v : router.routes_internal_data()) {
+            std::vector<std::optional<graph::Router<detail::Weight>::RouteInternalData>> temp_vector;
+            for(const proto_graph::OptionalData& proto_o_d : proto_o_v.data()) {
+                if(proto_o_d.has_route_internal_data()) {
+                    graph::Router<detail::Weight>::RouteInternalData temp_data;
+                    temp_data.weight = MakeWeight(proto_o_d.route_internal_data().weight(), stop_ids, buses);
+                    if(proto_o_d.route_internal_data().prev_edge_case() == 2) {
+                        temp_data.prev_edge = proto_o_d.route_internal_data().edge();
+                    }
+                    temp_vector.push_back(temp_data);
+                } else {
+                    temp_vector.push_back({});
+                }
+            }
+            result.push_back(temp_vector);
+        }
+        return result;
+    }
+
+    detail::RoutingSettings ParseRoutingSettings(proto_catalogue::TransportCatalogue& pc) {
+        detail::RoutingSettings result;
+        result.bus_velocity = pc.router().settings().bus_velocity();
+        result.bus_wait_time = pc.router().settings().bus_wait_time();
+        return result;
+    }
 } //namespace backend

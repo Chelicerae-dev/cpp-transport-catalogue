@@ -19,9 +19,7 @@ JsonReader::JsonReader(json::Document& input) {
         json::Dict input_data = input.GetRoot().AsDict();
         json::Array input_requests = input_data.at("base_requests").AsArray();
         if(input_data.count("serialization_settings") != 0) ParseSerializationSettings(input_data.at("serialization_settings").AsDict());
-//        json::Array output_requests;
 
-//        if(input_data.count("stat_requests") != 0) output_requests = input_data.at("stat_requests").AsArray();
         std::for_each(input_requests.begin(), input_requests.end(), [this](const json::Node& node){
             json::Dict query = node.AsDict();
             if(query.at("type").AsString() == "Stop") {
@@ -41,13 +39,6 @@ JsonReader::JsonReader(json::Document& input) {
         std::for_each(buses_query_.begin(), buses_query_.end(), [&transport_catalogue] (auto& this_bus) {
             transport_catalogue.AddBus(transport_catalogue.MakeBus(this_bus.name, this_bus.stops, this_bus.is_looped));
         });
-
-        //Обрабатываем запросы на вывод
-//        if(output_requests.size() != 0) {
-//            for(const json::Node& node : output_requests) {
-//                ParseRequest(node.AsDict());
-//            }
-//        }
 
         //Сохраняем настройки рендера
         if(input_data.count("render_settings") != 0) ParseRenderSettings(input_data.at("render_settings").AsDict());
@@ -109,7 +100,6 @@ JsonReader::JsonReader(json::Document& input) {
                 //готовим вывод элемента по заданному шаблону, не забыть убрать комментарии и поставить функцию, которую ещё предстоит написать
                 json::Builder result{};
                 result.StartDict();
-                //////
                 detail::RoutingAnswer route = routing_proc(request.from.value(), request.to.value(), request.id);
                 result.Key("request_id").Value(route.id);
                 if(route.exists) {
@@ -146,8 +136,16 @@ JsonReader::JsonReader(json::Document& input) {
         std::string name = node->at("name").AsString();
         double longitude = 0.;
         double latitude = 0.;
-        longitude = node->at("longitude").AsDouble() * 1.;
-        latitude = node->at("latitude").AsDouble() * 1.;
+        if(node->at("longitude").IsDouble()) {
+            longitude = node->at("longitude").AsDouble();
+        } else if(node->at("longitude").IsInt()) {
+            longitude = node->at("longitude").AsInt() * 1.;
+        }
+        if(node->at("latitude").IsDouble()) {
+            latitude = node->at("latitude").AsDouble();
+        } else if(node->at("longitude").IsInt()) {
+            latitude = node->at("latitude").AsInt() * 1.;
+        }
         //сначала парсим расстояния если они есть
         if(node->count("road_distances") != 0) {
             json::Dict distances = node->at("road_distances").AsDict();

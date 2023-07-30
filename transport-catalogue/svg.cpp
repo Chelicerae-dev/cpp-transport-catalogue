@@ -204,6 +204,7 @@ void Document::Render(std::ostream& out) const {
     out << ' ';
     bool first = true;
     for(auto& object : objects_) {
+        //штош, пририсовывем пробелы, на которые всегда было пофиг
         if(first) {
             first = false;
         } else {

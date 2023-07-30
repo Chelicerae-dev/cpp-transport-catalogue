@@ -6,7 +6,7 @@ message Weight {
     double value = 1;
     bool is_wait = 2;
     int32 span = 3;
-    bytes name = 4;
+    uint32 id = 4;
 }
 
 message Edge {

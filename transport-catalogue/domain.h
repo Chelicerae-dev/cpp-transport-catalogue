@@ -2,6 +2,7 @@
 
 #include "geo.h"
 #include "graph.h"
+#include "router.h"
 #include <string>
 #include <set>
 #include <vector>
@@ -150,6 +151,12 @@ namespace transport_catalogue {
 
         struct SerializationSettings {
             std::string file;
+        };
+
+        struct RouterSerialization {
+            std::vector<graph::Edge<detail::Weight>> graph_edges;
+            std::vector<std::vector<size_t>> incidence_lists;
+            std::vector<std::vector<std::optional<graph::Router<Weight>::RouteInternalData>>> routes_internal_data;
         };
     }
 }

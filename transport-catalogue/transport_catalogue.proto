@@ -40,5 +40,5 @@ message TransportCatalogue  {
     repeated Distance distances = 3;
     proto_map.RenderSettings render_settings = 4;
     repeated StopVertex vertices = 5;
-    proto_router.Settings routing_settings = 6;
+    proto_router.TransportRouter router = 6;
 }

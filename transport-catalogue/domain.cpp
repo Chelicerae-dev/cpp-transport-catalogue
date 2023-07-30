@@ -16,10 +16,9 @@ namespace transport_catalogue::detail {
         return {value + other.value, is_wait, span + other.span, name};
     }
     bool Weight::operator<(const Weight& other) const {
-        //return value < other.value && !std::lexicographical_compare(std::string(name).begin(), std::string(name).end(), std::string(other.name).begin(), std::string(other.name).end());
-        return value < other.value;
+       return value < other.value;
     }
     bool Weight::operator>(const Weight& other) const {
-        return value > other.value && std::lexicographical_compare(std::string(name).begin(), std::string(name).end(), std::string(other.name).begin(), std::string(other.name).end());
+        return value > other.value;
     }
 }

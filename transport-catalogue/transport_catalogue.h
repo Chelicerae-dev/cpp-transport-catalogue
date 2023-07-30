@@ -42,6 +42,10 @@ namespace transport_catalogue {
 
                 std::optional<graph::VertexId> GetStopVertex(std::string_view name) const;
 
+                //Добавляем методы для сериализации и десериализации
+                std::unordered_map<detail::Stop*, detail::StopVertices> GetVertices() ;
+                void SetVertices(std::unordered_map<std::string_view, detail::StopVertices> vertices);
+
             private:
                 std::list<detail::Stop> stops_;
                 std::unordered_map<std::string_view, detail::Stop*> stopname_to_stop_;

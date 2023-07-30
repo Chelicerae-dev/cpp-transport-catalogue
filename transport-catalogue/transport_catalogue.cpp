@@ -85,7 +85,6 @@
                 if(temp_coords == impossible_coordinates && prev_stop == nullptr) {
                     temp_coords = this_stop->location;
                     prev_stop = this_stop;
-                    return;
                 } else {
                     length += GetStopDistance(prev_stop, this_stop);
                     length_geo += geo::ComputeDistance(temp_coords, this_stop->location);
@@ -147,59 +146,58 @@
         }
 
         //private методы-хелперы для построения RouteGraphData
-        void TransportCatalogue::GetVertexIds() {
-//            for(const auto& [name, stop] : stopname_to_stop_) {
-            //непонятно почему разные результаты при переборе stops_ и stopname_to_stop_
-            for(auto& stop : stops_) {
-                //добавляем в поле класса для передачи в класс, который будет искать кратчайший путь
-                if(stopname_to_vertices_.count(stop.name) == 0) {
-                    stopname_to_vertices_[stop.name] = {&stop,  vertice_counter_, vertice_counter_ + 1};
-                    vertice_counter_ += 2;
-                }
-            }
+         void TransportCatalogue::GetVertexIds() {
+             //непонятно почему разные результаты при переборе stops_ и stopname_to_stop_
+             for(auto& stop : stops_) {
+                 //добавляем в поле класса для передачи в класс, который будет искать кратчайший путь
+                 if(stopname_to_vertices_.count(stop.name) == 0) {
+                     stopname_to_vertices_[stop.name] = {&stop,  vertice_counter_, vertice_counter_ + 1};
+                     vertice_counter_ += 2;
+                 }
+             }
 
-        }
+         }
 
-        std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetBusEdges(const detail::Bus* bus, const detail::RoutingSettings& settings) {
-            std::vector<graph::Edge<detail::Weight>> result;
-            for(int i = 0; i < bus->stops.size(); ++i) {
-                //вводим временные меременные чтобы не писать 3-строчные аргументы
-                auto name = bus->stops[i]->name;
-                auto i_value = stopname_to_vertices_.at(name);
-                result.push_back({i_value.wait, i_value.bus, {static_cast<double>(settings.bus_wait_time), true, 0, i_value.stop->name}});
-                ++edge_counter_;
-                int distance = 0;
-                for(int j = i + 1; j < bus->stops.size(); ++j) {
-                    auto j_value = stopname_to_vertices_.at(bus->stops[j]->name);
-                    auto prev_to_j_value = stopname_to_vertices_.at(bus->stops[j - 1]->name);
-                    if(distances_.at(prev_to_j_value.stop).count(prev_to_j_value.stop) != 0) {
-                        distance += distances_.at(prev_to_j_value.stop).at(prev_to_j_value.stop);
-                    }
-                    distance += distances_.at(prev_to_j_value.stop).at(j_value.stop);
-                    result.push_back({i_value.bus, j_value.wait, {distance / settings.bus_velocity, false, j - i, bus->name}});
-                    ++edge_counter_;
-                }
-            }
-            if(!bus->is_looped) {
-                for(int i = bus->stops.size() - 1; i > 0; i--) {
-                    int distance = 0;
-                    auto name = bus->stops[i]->name;
-                    auto i_value = stopname_to_vertices_.at(name);
-                    for(int j = i - 1; j >= 0; j--) {
-                        auto j_value = stopname_to_vertices_.at(bus->stops[j]->name);
-                        auto next_to_j_value = stopname_to_vertices_.at(bus->stops[j + 1]->name);
-                        if(distances_.at(next_to_j_value.stop).count(next_to_j_value.stop) != 0) {
-                            distance += distances_.at(next_to_j_value.stop).at(next_to_j_value.stop);
-                        }
-                        distance += distances_.at(next_to_j_value.stop).at(j_value.stop);
-                        result.push_back({i_value.bus, j_value.wait, {distance / settings.bus_velocity, false, i - j, bus->name}});
-                        ++edge_counter_;
-                    }
-                }
-            }
+         std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetBusEdges(const detail::Bus* bus, const detail::RoutingSettings& settings) {
+                     std::vector<graph::Edge<detail::Weight>> result;
+                     for(int i = 0; i < bus->stops.size(); ++i) {
+                         //вводим временные меременные чтобы не писать 3-строчные аргументы
+                         auto name = bus->stops[i]->name;
+                         auto i_value = stopname_to_vertices_.at(name);
+                         result.push_back({i_value.wait, i_value.bus, {static_cast<double>(settings.bus_wait_time), true, 0, i_value.stop->name}});
+                         ++edge_counter_;
+                         int distance = 0;
+                         for(int j = i + 1; j < bus->stops.size(); ++j) {
+                             auto j_value = stopname_to_vertices_.at(bus->stops[j]->name);
+                             auto prev_to_j_value = stopname_to_vertices_.at(bus->stops[j - 1]->name);
+                             if(distances_.at(prev_to_j_value.stop).count(prev_to_j_value.stop) != 0) {
+                                 distance += distances_.at(prev_to_j_value.stop).at(prev_to_j_value.stop);
+                             }
+                             distance += distances_.at(prev_to_j_value.stop).at(j_value.stop);
+                             result.push_back({i_value.bus, j_value.wait, {distance / settings.bus_velocity, false, j - i, bus->name}});
+                             ++edge_counter_;
+                         }
+                     }
+                     if(!bus->is_looped) {
+                         for(int i = bus->stops.size() - 1; i > 0; i--) {
+                             int distance = 0;
+                             auto name = bus->stops[i]->name;
+                             auto i_value = stopname_to_vertices_.at(name);
+                             for(int j = i - 1; j >= 0; j--) {
+                                 auto j_value = stopname_to_vertices_.at(bus->stops[j]->name);
+                                 auto next_to_j_value = stopname_to_vertices_.at(bus->stops[j + 1]->name);
+                                 if(distances_.at(next_to_j_value.stop).count(next_to_j_value.stop) != 0) {
+                                     distance += distances_.at(next_to_j_value.stop).at(next_to_j_value.stop);
+                                 }
+                                 distance += distances_.at(next_to_j_value.stop).at(j_value.stop);
+                                 result.push_back({i_value.bus, j_value.wait, {distance / settings.bus_velocity, false, i - j, bus->name}});
+                                 ++edge_counter_;
+                             }
+                         }
+                     }
 
-            return result;
-        }
+                     return result;
+                 }
 
         //Построение RouteGraphData для всех маршрутов для построения графа
         std::vector<graph::Edge<detail::Weight>> TransportCatalogue::GetGraphData(const detail::RoutingSettings& settings) {
@@ -207,27 +205,34 @@
                 GetVertexIds();
             }
             std::vector<graph::Edge<detail::Weight>> result;
-//            for(const auto& [name, bus] : busname_to_bus_) {
             for(const auto& bus : buses_) {
                 std::vector<graph::Edge<detail::Weight>> edges = GetBusEdges(&bus, settings);
                 //перемещаем рёбра в выходной результат{
                 result.insert(result.end(), std::make_move_iterator(edges.begin()), std::make_move_iterator(edges.end()));
-//                result.insert(result.end(), edges.begin(), edges.end());
             }
             return result;
         }
 
         std::optional<graph::VertexId> TransportCatalogue::GetStopVertex(std::string_view name) const {
-            if(stopname_to_vertices_.count(name) != 0) {
-                return stopname_to_vertices_.at(name).wait;
-            } else {
-                return {};
-//                throw std::out_of_range("No such stop to search route");
-            }
-        }
+                    if(stopname_to_vertices_.count(name) != 0) {
+                        return stopname_to_vertices_.at(name).wait;
+                    } else {
+                        return {};
+                    }
+                }
 
         size_t TransportCatalogue::GetVertexCount() const {
-            //return vertice_counter_;
-            return stops_.size() * 2;
+            return vertice_counter_;
         }
+
+        std::unordered_map<detail::Stop*, detail::StopVertices> TransportCatalogue::GetVertices() {
+            std::unordered_map< detail::Stop*, detail::StopVertices> result;
+            for(auto [name, vertices] : stopname_to_vertices_) {
+                result[GetStop(name)] = vertices;
+            }
+            return result;
+        }
+        void TransportCatalogue::SetVertices(std::unordered_map<std::string_view, detail::StopVertices> vertices) {
+            stopname_to_vertices_ = vertices;
     }
+}
