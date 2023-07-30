@@ -13,10 +13,12 @@ namespace transport_catalogue::input {
     class JsonReader {
     public:
         JsonReader() = default;
+        JsonReader(json::Document& input);
         JsonReader(backend::TransportCatalogue& transport_catalogue, json::Document& input);
         bool GetQuery(detail::OutputQuery& output);
         const render::RenderSettings& GetRenderSettings() const;
         const detail::RoutingSettings& GetRoutingSettings() const;
+        const detail::SerializationSettings& GetSerializationSettings() const;
 
         //метод для обработки всех запросов из JSON и ответа в виде JSON
         json::Document ProcessRequests(std::function<detail::BusAnswer(const std::string&, int)> bus_proc,
@@ -30,6 +32,7 @@ namespace transport_catalogue::input {
         std::deque<detail::OutputQuery> requests_query_;
         render::RenderSettings render_settings_;
         detail::RoutingSettings routing_settings_;
+        detail::SerializationSettings serialization_settings_;
         backend::TransportCatalogue* catalogue_;
 
 
@@ -39,5 +42,6 @@ namespace transport_catalogue::input {
         void ParseRequest(const json::Dict& node);
         void ParseRenderSettings(const json::Dict& node);
         svg::Color ParseSvgColor(const json::Node& node);
+        void ParseSerializationSettings(const json::Dict& node);
     };
 }

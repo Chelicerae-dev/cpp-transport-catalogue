@@ -1,12 +1,27 @@
 #include "json_reader.h"
 
 namespace transport_catalogue::input {
+JsonReader::JsonReader(json::Document& input) {
+    json::Dict input_data = input.GetRoot().AsDict();
+    json::Array output_requests = input_data.at("stat_requests").AsArray();
+    if(input_data.count("serialization_settings") != 0) ParseSerializationSettings(input_data.at("serialization_settings").AsDict());
+
+    if(output_requests.size() != 0) {
+        for(const json::Node& node : output_requests) {
+            ParseRequest(node.AsDict());
+        }
+    }
+}
+
     JsonReader::JsonReader(backend::TransportCatalogue& transport_catalogue, json::Document& input)
-        : catalogue_(&transport_catalogue) {
-        json::Dict input_data = input.GetRoot().AsDict(); //В заготовке json.h к предыдущим урокам был AsDict, штош, оставлю его
+        : catalogue_(&transport_catalogue)
+    {
+        json::Dict input_data = input.GetRoot().AsDict();
         json::Array input_requests = input_data.at("base_requests").AsArray();
-        json::Array output_requests;
-        if(input_data.count("stat_requests") != 0) output_requests = input_data.at("stat_requests").AsArray();
+        if(input_data.count("serialization_settings") != 0) ParseSerializationSettings(input_data.at("serialization_settings").AsDict());
+//        json::Array output_requests;
+
+//        if(input_data.count("stat_requests") != 0) output_requests = input_data.at("stat_requests").AsArray();
         std::for_each(input_requests.begin(), input_requests.end(), [this](const json::Node& node){
             json::Dict query = node.AsDict();
             if(query.at("type").AsString() == "Stop") {
@@ -28,11 +43,11 @@ namespace transport_catalogue::input {
         });
 
         //Обрабатываем запросы на вывод
-        if(output_requests.size() != 0) {
-            for(const json::Node& node : output_requests) {
-                ParseRequest(node.AsDict());
-            }
-        }
+//        if(output_requests.size() != 0) {
+//            for(const json::Node& node : output_requests) {
+//                ParseRequest(node.AsDict());
+//            }
+//        }
 
         //Сохраняем настройки рендера
         if(input_data.count("render_settings") != 0) ParseRenderSettings(input_data.at("render_settings").AsDict());
@@ -129,8 +144,10 @@ namespace transport_catalogue::input {
     void JsonReader::ParseStop(json::Dict* node) {
         //получаем имя остановки
         std::string name = node->at("name").AsString();
-        double longitude = node->at("longitude").AsDouble();
-        double latitude = node->at("latitude").AsDouble();
+        double longitude = 0.;
+        double latitude = 0.;
+        longitude = node->at("longitude").AsDouble() * 1.;
+        latitude = node->at("latitude").AsDouble() * 1.;
         //сначала парсим расстояния если они есть
         if(node->count("road_distances") != 0) {
             json::Dict distances = node->at("road_distances").AsDict();
@@ -215,12 +232,20 @@ namespace transport_catalogue::input {
         }
     }
 
+    void JsonReader::ParseSerializationSettings(const json::Dict& node) {
+        if(node.count("file") != 0) serialization_settings_.file = node.at("file").AsString();
+    }
+
     const render::RenderSettings& JsonReader::GetRenderSettings() const {
         return render_settings_;
     }
 
     const detail::RoutingSettings& JsonReader::GetRoutingSettings() const {
         return routing_settings_;
+    }
+
+    const detail::SerializationSettings& JsonReader::GetSerializationSettings() const {
+        return serialization_settings_;
     }
 
 }

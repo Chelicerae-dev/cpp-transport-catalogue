@@ -34,11 +34,13 @@ namespace transport_catalogue {
 
                 std::vector<detail::Bus*> GetAllBuses();
                 std::vector<detail::Stop*> GetAllStops();
+                std::vector<detail::Stop*> GetAllStops(bool to_proto);
+                std::unordered_map<detail::Stop*, std::unordered_map<detail::Stop*, int>> GetAllDistances() const;
 
                 size_t GetVertexCount() const;
                 std::vector<graph::Edge<detail::Weight>> GetGraphData(const detail::RoutingSettings& settings);
 
-                graph::VertexId GetStopVertex(std::string_view name) const;
+                std::optional<graph::VertexId> GetStopVertex(std::string_view name) const;
 
             private:
                 std::list<detail::Stop> stops_;

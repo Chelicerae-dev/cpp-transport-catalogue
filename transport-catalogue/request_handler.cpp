@@ -16,7 +16,10 @@ namespace transport_catalogue::output {
         result.id = id;
         auto ver_from = transport_catalogue_->GetStopVertex(from);
         auto ver_to = transport_catalogue_->GetStopVertex(to);
-        detail::Route route = router_.BuildRoute(ver_from, ver_to);
+        if(!ver_from.has_value() || !ver_to.has_value()) {
+            return result;
+        }
+        detail::Route route = router_.BuildRoute(ver_from.value(), ver_to.value());
         if(route.exists) {
             result.exists = true;
             result.total_time = route.time;

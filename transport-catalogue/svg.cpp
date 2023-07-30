@@ -100,7 +100,7 @@ Circle& Circle::SetRadius(double radius)  {
 
 void Circle::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
-    out << "<circle cx=\""sv << center_.x << "\" cy=\""sv << center_.y << "\" "sv;
+    out << " <circle cx=\""sv << center_.x << "\" cy=\""sv << center_.y << "\" "sv;
     out << "r=\""sv << radius_ << '"';
     RenderAttrs(out);
     out << "/>"sv;
@@ -115,7 +115,7 @@ Polyline& Polyline::AddPoint(Point point) {
 void Polyline::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
     std::string_view temp;
-    out << "<polyline points=\""sv;
+    out << " <polyline points=\""sv;
     for(size_t i = 0; i < points_.size(); ++i) {
         out << points_[i].x << ',' << points_[i].y;
         if(i != points_.size() - 1) {
@@ -167,7 +167,7 @@ Text& Text::SetData(std::string data) {
 // Прочие данные и методы, необходимые для реализации элемента <text>
 void Text::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
-    out << "<text"sv;
+    out << " <text"sv;
     RenderAttrs(out);
     out << " x=\""sv << pos_.x << "\" y=\""sv << pos_.y << '"';
 //    if(offset_.x != 0 && offset_.y != 0) {
@@ -201,9 +201,16 @@ void Document::AddPtr(std::unique_ptr<Object>&& obj) {
 void Document::Render(std::ostream& out) const {
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"sv << std::endl;
     out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
+    out << ' ';
+    bool first = true;
     for(auto& object : objects_) {
+        if(first) {
+            first = false;
+        } else {
+            out << ' ';
+        }
         object->Render({out});
-        out << ' ';
+
     }
     out << "</svg>"sv;
 }

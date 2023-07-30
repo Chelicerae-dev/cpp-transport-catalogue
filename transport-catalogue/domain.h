@@ -147,5 +147,9 @@ namespace transport_catalogue {
             double time = 0.;
             std::optional<std::vector<RouteItem>> items;
         };
+
+        struct SerializationSettings {
+            std::string file;
+        };
     }
 }

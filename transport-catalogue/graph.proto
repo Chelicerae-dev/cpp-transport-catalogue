@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package proto_graph;
+
+message Weight {
+    double value = 1;
+    bool is_wait = 2;
+    int32 span = 3;
+    bytes name = 4;
+}
+
+message Edge {
+    uint64 from = 1;
+    uint64 to = 2;
+    Weight weight = 3;
+}
+
+message IncidenceList {
+    repeated uint64 values = 1;
+}
+message Graph {
+    repeated Edge edges = 1;
+    repeated IncidenceList incidence_lists = 2;
+}
+
+message RouteInternalData {
+    Weight weight = 1;
+    oneof prev_edge {
+        uint64 edge = 2;
+    }
+}
+
+message OptionalData {
+    oneof data {
+        RouteInternalData route_internal_data = 1;
+    }
+}
+
+message OptionalVector {
+    repeated OptionalData data = 1;
+}
+
+message Router {
+    Graph graph = 1;
+    repeated OptionalVector routes_internal_data = 2;
+}
