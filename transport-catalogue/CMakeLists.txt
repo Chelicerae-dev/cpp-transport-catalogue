@@ -5,7 +5,7 @@ project(transport_catalogue LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_PREFIX_PATH ../../protobuf/debug/)
+set(CMAKE_PREFIX_PATH ../protobuf/debug/)
 
 find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
