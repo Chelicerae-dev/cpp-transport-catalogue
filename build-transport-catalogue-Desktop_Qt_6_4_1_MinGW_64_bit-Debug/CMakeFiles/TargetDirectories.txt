@@ -1,3 +1,0 @@
-C:/practicum/cpp-transport-catalogue/build-transport-catalogue-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/CMakeFiles/cpp-transport-catalogue.dir
-C:/practicum/cpp-transport-catalogue/build-transport-catalogue-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/CMakeFiles/edit_cache.dir
-C:/practicum/cpp-transport-catalogue/build-transport-catalogue-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/CMakeFiles/rebuild_cache.dir
